@@ -26,14 +26,14 @@ var (
 	Hex128Pattern = regexp.MustCompile("^[a-f0-9]{128}$")
 )
 
-func (event Event) Serialize() ([]byte, error) {
+func (e Event) Serialize() ([]byte, error) {
 	serialized := []interface{}{
 		0,
-		event.PubKey,
-		event.CreatedAt,
-		event.Kind,
-		event.Tags,
-		event.Content,
+		e.PubKey,
+		e.CreatedAt,
+		e.Kind,
+		e.Tags,
+		e.Content,
 	}
 
 	bytes, err := json.Marshal(serialized)
@@ -43,61 +43,13 @@ func (event Event) Serialize() ([]byte, error) {
 	return bytes, nil
 }
 
-func (event Event) GetID() (string, error) {
-	bytes, err := event.Serialize()
+func (e Event) GetID() (string, error) {
+	bytes, err := e.Serialize()
 	if err != nil {
 		return "", err
 	}
 	hash := sha256.Sum256(bytes)
 	return hex.EncodeToString(hash[:]), nil
-}
-
-func (event Event) Validate() error {
-	if err := event.ValidateStructure(); err != nil {
-		return err
-	}
-
-	if err := event.ValidateID(); err != nil {
-		return err
-	}
-
-	return ValidateSignature(event.ID, event.Sig, event.PubKey)
-}
-
-func (event Event) ValidateStructure() error {
-	if !Hex64Pattern.MatchString(event.PubKey) {
-		return fmt.Errorf("pubkey must be 64 lowercase hex characters")
-	}
-
-	if !Hex64Pattern.MatchString(event.ID) {
-		return fmt.Errorf("id must be 64 hex characters")
-	}
-
-	if !Hex128Pattern.MatchString(event.Sig) {
-		return fmt.Errorf("signature must be 128 hex characters")
-	}
-
-	for _, tag := range event.Tags {
-		if len(tag) < 2 {
-			return fmt.Errorf("tags must contain at least two elements")
-		}
-	}
-
-	return nil
-}
-
-func (event Event) ValidateID() error {
-	computedID, err := event.GetID()
-	if err != nil {
-		return fmt.Errorf("failed to compute event id")
-	}
-	if event.ID == "" {
-		return fmt.Errorf("event id is empty")
-	}
-	if computedID != event.ID {
-		return fmt.Errorf("event id %q does not match computed id %q", event.ID, computedID)
-	}
-	return nil
 }
 
 func SignEvent(eventID, privateKeyHex string) (string, error) {
@@ -119,6 +71,54 @@ func SignEvent(eventID, privateKeyHex string) (string, error) {
 	}
 
 	return hex.EncodeToString(sig.Serialize()), nil
+}
+
+func (e Event) Validate() error {
+	if err := e.ValidateStructure(); err != nil {
+		return err
+	}
+
+	if err := e.ValidateID(); err != nil {
+		return err
+	}
+
+	return ValidateSignature(e.ID, e.Sig, e.PubKey)
+}
+
+func (e Event) ValidateStructure() error {
+	if !Hex64Pattern.MatchString(e.PubKey) {
+		return fmt.Errorf("pubkey must be 64 lowercase hex characters")
+	}
+
+	if !Hex64Pattern.MatchString(e.ID) {
+		return fmt.Errorf("id must be 64 hex characters")
+	}
+
+	if !Hex128Pattern.MatchString(e.Sig) {
+		return fmt.Errorf("signature must be 128 hex characters")
+	}
+
+	for _, tag := range e.Tags {
+		if len(tag) < 2 {
+			return fmt.Errorf("tags must contain at least two elements")
+		}
+	}
+
+	return nil
+}
+
+func (e Event) ValidateID() error {
+	computedID, err := e.GetID()
+	if err != nil {
+		return fmt.Errorf("failed to compute event id")
+	}
+	if e.ID == "" {
+		return fmt.Errorf("event id is empty")
+	}
+	if computedID != e.ID {
+		return fmt.Errorf("event id %q does not match computed id %q", e.ID, computedID)
+	}
+	return nil
 }
 
 func ValidateSignature(eventID, eventSig, publicKeyHex string) error {

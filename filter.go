@@ -17,36 +17,36 @@ type Filter struct {
 	Extensions map[string]json.RawMessage
 }
 
-func (filter Filter) MarshalJSON() ([]byte, error) {
+func (f Filter) MarshalJSON() ([]byte, error) {
 	outputMap := make(map[string]interface{})
 
 	// Add standard fields
-	if filter.IDs != nil {
-		outputMap["ids"] = filter.IDs
+	if f.IDs != nil {
+		outputMap["ids"] = f.IDs
 	}
-	if filter.Authors != nil {
-		outputMap["authors"] = filter.Authors
+	if f.Authors != nil {
+		outputMap["authors"] = f.Authors
 	}
-	if filter.Kinds != nil {
-		outputMap["kinds"] = filter.Kinds
+	if f.Kinds != nil {
+		outputMap["kinds"] = f.Kinds
 	}
-	if filter.Since != nil {
-		outputMap["since"] = *filter.Since
+	if f.Since != nil {
+		outputMap["since"] = *f.Since
 	}
-	if filter.Until != nil {
-		outputMap["until"] = *filter.Until
+	if f.Until != nil {
+		outputMap["until"] = *f.Until
 	}
-	if filter.Limit != nil {
-		outputMap["limit"] = *filter.Limit
+	if f.Limit != nil {
+		outputMap["limit"] = *f.Limit
 	}
 
 	// Add tags
-	for key, values := range filter.Tags {
+	for key, values := range f.Tags {
 		outputMap["#"+key] = values
 	}
 
 	// Merge extensions
-	for key, raw := range filter.Extensions {
+	for key, raw := range f.Extensions {
 		// Disallow standard keys in extensions
 		standardKeys := []string{"ids", "authors", "kinds", "since", "until", "limit"}
 		found := false
@@ -76,7 +76,7 @@ func (filter Filter) MarshalJSON() ([]byte, error) {
 	return json.Marshal(outputMap)
 }
 
-func (filter *Filter) UnmarshalJSON(data []byte) error {
+func (f *Filter) UnmarshalJSON(data []byte) error {
 	// Decode into raw map
 	raw := make(map[string]json.RawMessage)
 	if err := json.Unmarshal(data, &raw); err != nil {
@@ -85,21 +85,21 @@ func (filter *Filter) UnmarshalJSON(data []byte) error {
 
 	// Extract standard fields
 	if v, ok := raw["ids"]; ok {
-		if err := json.Unmarshal(v, &filter.IDs); err != nil {
+		if err := json.Unmarshal(v, &f.IDs); err != nil {
 			return err
 		}
 		delete(raw, "ids")
 	}
 
 	if v, ok := raw["authors"]; ok {
-		if err := json.Unmarshal(v, &filter.Authors); err != nil {
+		if err := json.Unmarshal(v, &f.Authors); err != nil {
 			return err
 		}
 		delete(raw, "authors")
 	}
 
 	if v, ok := raw["kinds"]; ok {
-		if err := json.Unmarshal(v, &filter.Kinds); err != nil {
+		if err := json.Unmarshal(v, &f.Kinds); err != nil {
 			return err
 		}
 		delete(raw, "kinds")
@@ -107,39 +107,39 @@ func (filter *Filter) UnmarshalJSON(data []byte) error {
 
 	if v, ok := raw["since"]; ok {
 		if string(raw["since"]) == "null" {
-			filter.Since = nil
+			f.Since = nil
 		} else {
 			var val int
 			if err := json.Unmarshal(v, &val); err != nil {
 				return err
 			}
-			filter.Since = &val
+			f.Since = &val
 		}
 		delete(raw, "since")
 	}
 
 	if v, ok := raw["until"]; ok {
 		if string(raw["until"]) == "null" {
-			filter.Until = nil
+			f.Until = nil
 		} else {
 			var val int
 			if err := json.Unmarshal(v, &val); err != nil {
 				return err
 			}
-			filter.Until = &val
+			f.Until = &val
 		}
 		delete(raw, "until")
 	}
 
 	if v, ok := raw["limit"]; ok {
 		if string(raw["limit"]) == "null" {
-			filter.Limit = nil
+			f.Limit = nil
 		} else {
 			var val int
 			if err := json.Unmarshal(v, &val); err != nil {
 				return err
 			}
-			filter.Limit = &val
+			f.Limit = &val
 		}
 		delete(raw, "limit")
 	}
@@ -148,57 +148,57 @@ func (filter *Filter) UnmarshalJSON(data []byte) error {
 	for key := range raw {
 		if strings.HasPrefix(key, "#") {
 			// Leave Tags as `nil` unless tag fields exist
-			if filter.Tags == nil {
-				filter.Tags = make(map[string][]string)
+			if f.Tags == nil {
+				f.Tags = make(map[string][]string)
 			}
 			tagKey := strings.TrimPrefix(key, "#")
 			var tagValues []string
 			if err := json.Unmarshal(raw[key], &tagValues); err != nil {
 				return err
 			}
-			filter.Tags[tagKey] = tagValues
+			f.Tags[tagKey] = tagValues
 			delete(raw, key)
 		}
 	}
 
 	// Place remaining fields in extensions
 	if len(raw) > 0 {
-		filter.Extensions = raw
+		f.Extensions = raw
 	}
 
 	return nil
 }
 
-func (filter Filter) Matches(event Event) bool {
+func (f Filter) Matches(event Event) bool {
 	// Check ID
-	if len(filter.IDs) > 0 {
-		if !matchesPrefix(event.ID, filter.IDs) {
+	if len(f.IDs) > 0 {
+		if !matchesPrefix(event.ID, f.IDs) {
 			return false
 		}
 	}
 
 	// Check Author
-	if len(filter.Authors) > 0 {
-		if !matchesPrefix(event.PubKey, filter.Authors) {
+	if len(f.Authors) > 0 {
+		if !matchesPrefix(event.PubKey, f.Authors) {
 			return false
 		}
 	}
 
 	// Check Kind
-	if len(filter.Kinds) > 0 {
-		if !matchesKinds(event.Kind, filter.Kinds) {
+	if len(f.Kinds) > 0 {
+		if !matchesKinds(event.Kind, f.Kinds) {
 			return false
 		}
 	}
 
 	// Check Timestamp
-	if !matchesTimeRange(event.CreatedAt, filter.Since, filter.Until) {
+	if !matchesTimeRange(event.CreatedAt, f.Since, f.Until) {
 		return false
 	}
 
 	// Check Tags
-	if len(filter.Tags) > 0 {
-		if !matchesTags(event.Tags, filter.Tags) {
+	if len(f.Tags) > 0 {
+		if !matchesTags(event.Tags, f.Tags) {
 			return false
 		}
 	}
