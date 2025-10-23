@@ -26,5 +26,5 @@ func TestGetPublicKey(t *testing.T) {
 
 func TestGetPublicKeyInvalidPrivateKey(t *testing.T) {
 	_, err := GetPublicKey("abc123")
-	assert.ErrorContains(t, err, "private key must be 64 hex characters")
+	assert.ErrorContains(t, err, "private key must be 64 lowercase hex characters")
 }

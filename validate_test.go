@@ -23,7 +23,7 @@ var structureTestCases = []ValidateEventTestCase{
 			Content:   testEvent.Content,
 			Sig:       testEvent.Sig,
 		},
-		expectedError: "pubkey must be 64 lowercase hex characters",
+		expectedError: "public key must be 64 lowercase hex characters",
 	},
 
 	{
@@ -37,7 +37,7 @@ var structureTestCases = []ValidateEventTestCase{
 			Content:   testEvent.Content,
 			Sig:       testEvent.Sig,
 		},
-		expectedError: "pubkey must be 64 lowercase hex characters",
+		expectedError: "public key must be 64 lowercase hex characters",
 	},
 
 	{
@@ -51,7 +51,7 @@ var structureTestCases = []ValidateEventTestCase{
 			Content:   testEvent.Content,
 			Sig:       testEvent.Sig,
 		},
-		expectedError: "pubkey must be 64 lowercase hex characters",
+		expectedError: "public key must be 64 lowercase hex characters",
 	},
 
 	{
@@ -65,7 +65,7 @@ var structureTestCases = []ValidateEventTestCase{
 			Content:   testEvent.Content,
 			Sig:       testEvent.Sig,
 		},
-		expectedError: "pubkey must be 64 lowercase hex characters",
+		expectedError: "public key must be 64 lowercase hex characters",
 	},
 
 	{
@@ -79,7 +79,7 @@ var structureTestCases = []ValidateEventTestCase{
 			Content:   testEvent.Content,
 			Sig:       testEvent.Sig,
 		},
-		expectedError: "pubkey must be 64 lowercase hex characters",
+		expectedError: "public key must be 64 lowercase hex characters",
 	},
 
 	{
@@ -145,7 +145,7 @@ var structureTestCases = []ValidateEventTestCase{
 			PubKey:    testEvent.PubKey,
 			CreatedAt: testEvent.CreatedAt,
 			Kind:      testEvent.Kind,
-			Tags:      [][]string{{}},
+			Tags:      []Tag{{}},
 			Content:   testEvent.Content,
 			Sig:       testEvent.Sig,
 		},
@@ -159,7 +159,7 @@ var structureTestCases = []ValidateEventTestCase{
 			PubKey:    testEvent.PubKey,
 			CreatedAt: testEvent.CreatedAt,
 			Kind:      testEvent.Kind,
-			Tags:      [][]string{{"a"}},
+			Tags:      []Tag{{"a"}},
 			Content:   testEvent.Content,
 			Sig:       testEvent.Sig,
 		},
@@ -173,7 +173,7 @@ var structureTestCases = []ValidateEventTestCase{
 			PubKey:    testEvent.PubKey,
 			CreatedAt: testEvent.CreatedAt,
 			Kind:      testEvent.Kind,
-			Tags:      [][]string{{"a", "value"}, {"b"}},
+			Tags:      []Tag{{"a", "value"}, {"b"}},
 			Content:   testEvent.Content,
 			Sig:       testEvent.Sig,
 		},
@@ -206,19 +206,23 @@ func TestValidateEventIDFailure(t *testing.T) {
 }
 
 func TestValidateSignature(t *testing.T) {
-	eventID := testEvent.ID
-	eventSig := testEvent.Sig
-	publicKey := testEvent.PubKey
-	err := ValidateSignature(eventID, eventSig, publicKey)
+	event := Event{
+		ID:     testEvent.ID,
+		PubKey: testEvent.PubKey,
+		Sig:    testEvent.Sig,
+	}
+	err := event.ValidateSignature()
 
 	assert.NoError(t, err)
 }
 
 func TestValidateInvalidSignature(t *testing.T) {
-	eventID := testEvent.ID
-	eventSig := "9e43cbcf7e828a21c53fa35371ee79bffbfd7a3063ae46fc05ec623dd3186667c57e3d006488015e19247df35eb41c61013e051aa87860e23fa5ffbd44120482"
-	publicKey := testEvent.PubKey
-	err := ValidateSignature(eventID, eventSig, publicKey)
+	event := Event{
+		ID:     testEvent.ID,
+		PubKey: testEvent.PubKey,
+		Sig:    "9e43cbcf7e828a21c53fa35371ee79bffbfd7a3063ae46fc05ec623dd3186667c57e3d006488015e19247df35eb41c61013e051aa87860e23fa5ffbd44120482",
+	}
+	err := event.ValidateSignature()
 
 	assert.ErrorContains(t, err, "event signature is invalid")
 }
@@ -276,7 +280,8 @@ var validateSignatureTestCases = []ValidateSignatureTestCase{
 func TestValidateSignatureInvalidEventSignature(t *testing.T) {
 	for _, tc := range validateSignatureTestCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := ValidateSignature(tc.id, tc.sig, tc.pubkey)
+			event := Event{ID: tc.id, PubKey: tc.pubkey, Sig: tc.sig}
+			err := event.ValidateSignature()
 			assert.ErrorContains(t, err, tc.expectedError)
 		})
 	}
@@ -288,7 +293,7 @@ func TestValidateEvent(t *testing.T) {
 		PubKey:    testEvent.PubKey,
 		CreatedAt: testEvent.CreatedAt,
 		Kind:      testEvent.Kind,
-		Tags: [][]string{
+		Tags: []Tag{
 			{"a", "value"},
 			{"b", "value", "optional"},
 		},

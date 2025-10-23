@@ -13,7 +13,7 @@ var testEvent = Event{
 	PubKey:    testPK,
 	CreatedAt: 1760740551,
 	Kind:      1,
-	Tags:      [][]string{},
+	Tags:      []Tag{},
 	Content:   "hello world",
 	Sig:       "83b71e15649c9e9da362c175f988c36404cabf357a976d869102a74451cfb8af486f6088b5631033b4927bd46cad7a0d90d7f624aefc0ac260364aa65c36071a",
 }

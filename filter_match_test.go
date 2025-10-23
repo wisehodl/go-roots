@@ -19,6 +19,7 @@ func init() {
 	}
 }
 
+// Test keypairs corresponding to test events, for reference.
 var (
 	nayru_sk  = "1784be782585dfa97712afe12585d13ee608b624cf564116fa143c31a124d31e"
 	nayru_pk  = "d877e187934bd942a71221b50ff2b426bd0777991b41b6c749119805dc40bcbe"
@@ -225,7 +226,7 @@ var filterTestCases = []FilterTestCase{
 	{
 		name: "empty tag filter",
 		filter: Filter{
-			Tags: map[string][]string{
+			Tags: TagFilters{
 				"e": {},
 			},
 		},
@@ -245,7 +246,7 @@ var filterTestCases = []FilterTestCase{
 	{
 		name: "single letter tag filter: e",
 		filter: Filter{
-			Tags: map[string][]string{
+			Tags: TagFilters{
 				"e": {"5c83da77af1dec6d7289834998ad7aafbd9e2191396d75ec3cc27f5a77226f36"},
 			},
 		},
@@ -255,7 +256,7 @@ var filterTestCases = []FilterTestCase{
 	{
 		name: "multiple tag matches",
 		filter: Filter{
-			Tags: map[string][]string{
+			Tags: TagFilters{
 				"e": {
 					"5c83da77af1dec6d7289834998ad7aafbd9e2191396d75ec3cc27f5a77226f36",
 					"ae3f2a91b6c3d8f7e9a1c5b4d8f2e7a9b6c3d8f7e9a1c5b4d8f2e7a9b6c3d8f7",
@@ -268,7 +269,7 @@ var filterTestCases = []FilterTestCase{
 	{
 		name: "multiple tag matches - single event match",
 		filter: Filter{
-			Tags: map[string][]string{
+			Tags: TagFilters{
 				"e": {
 					"5c83da77af1dec6d7289834998ad7aafbd9e2191396d75ec3cc27f5a77226f36",
 					"cb7787c460a79187d6a13e75a0f19240e05fafca8ea42288f5765773ea69cf2f",
@@ -281,7 +282,7 @@ var filterTestCases = []FilterTestCase{
 	{
 		name: "single letter tag filter: p",
 		filter: Filter{
-			Tags: map[string][]string{
+			Tags: TagFilters{
 				"p": {"91cf9b32f3735070f46c0a86a820a47efa08a5be6c9f4f8cf68e5b5b75c92d60"},
 			},
 		},
@@ -291,7 +292,7 @@ var filterTestCases = []FilterTestCase{
 	{
 		name: "multi letter tag filter",
 		filter: Filter{
-			Tags: map[string][]string{
+			Tags: TagFilters{
 				"emoji": {"🌊"},
 			},
 		},
@@ -301,7 +302,7 @@ var filterTestCases = []FilterTestCase{
 	{
 		name: "multiple tag filters",
 		filter: Filter{
-			Tags: map[string][]string{
+			Tags: TagFilters{
 				"e": {"ae3f2a91b6c3d8f7e9a1c5b4d8f2e7a9b6c3d8f7e9a1c5b4d8f2e7a9b6c3d8f7"},
 				"p": {"3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d"},
 			},
@@ -312,7 +313,7 @@ var filterTestCases = []FilterTestCase{
 	{
 		name: "prefix tag filter",
 		filter: Filter{
-			Tags: map[string][]string{
+			Tags: TagFilters{
 				"p": {"ae3f2a91"},
 			},
 		},
@@ -322,7 +323,7 @@ var filterTestCases = []FilterTestCase{
 	{
 		name: "unknown tag filter",
 		filter: Filter{
-			Tags: map[string][]string{
+			Tags: TagFilters{
 				"z": {"anything"},
 			},
 		},
@@ -358,7 +359,7 @@ var filterTestCases = []FilterTestCase{
 		name: "combined author+tag tag filter",
 		filter: Filter{
 			Authors: []string{"e719e8f8"},
-			Tags: map[string][]string{
+			Tags: TagFilters{
 				"power": {"fire"},
 			},
 		},
@@ -374,7 +375,7 @@ var filterTestCases = []FilterTestCase{
 			Kinds:   []int{0},
 			Since:   intPtr(5000),
 			Until:   intPtr(10000),
-			Tags: map[string][]string{
+			Tags: TagFilters{
 				"power": {"fire"},
 			},
 		},
@@ -397,4 +398,22 @@ func TestEventFilterMatching(t *testing.T) {
 			assert.Equal(t, tc.expectedIDs, actualIDs)
 		})
 	}
+}
+
+// TestEventFilterMatchingSkipMalformedTags documents that filter.Matches()
+// skips malformed tags during tag matching
+func TestEventFilterMatchingSkipMalformedTags(t *testing.T) {
+	event := Event{
+		Tags: []Tag{
+			{"malformed"},
+			{"valid", "value"},
+		},
+	}
+	filter := Filter{
+		Tags: TagFilters{
+			"valid": {"value"},
+		},
+	}
+
+	assert.True(t, filter.Matches(&event))
 }

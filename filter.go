@@ -2,10 +2,19 @@ package roots
 
 import (
 	"encoding/json"
-	// "fmt"
 	"strings"
 )
 
+// TagFilters maps tag names to arrays of values for tag-based filtering
+// Keys correspond to tag names without the "#" prefix.
+type TagFilters map[string][]string
+
+// FilterExtensions holds arbitrary additional filter fields as raw JSON.
+// Allows custom filter extensions without modifying the core Filter type.
+type FilterExtensions map[string]json.RawMessage
+
+// Filter defines subscription criteria for events.
+// All conditions within a filter applied with AND logic.
 type Filter struct {
 	IDs        []string
 	Authors    []string
@@ -13,10 +22,12 @@ type Filter struct {
 	Since      *int
 	Until      *int
 	Limit      *int
-	Tags       map[string][]string
-	Extensions map[string]json.RawMessage
+	Tags       TagFilters
+	Extensions FilterExtensions
 }
 
+// MarshalJSON converts the filter to JSON with standard fields, tag filters
+// (prefixed with "#"), and extensions merged into a single object.
 func (f *Filter) MarshalJSON() ([]byte, error) {
 	outputMap := make(map[string]interface{})
 
@@ -72,9 +83,11 @@ func (f *Filter) MarshalJSON() ([]byte, error) {
 	return json.Marshal(outputMap)
 }
 
+// UnmarshalJSON parses JSON into the filter, separating standard fields,
+// tag filters (keys starting with "#"), and extensions.
 func (f *Filter) UnmarshalJSON(data []byte) error {
 	// Decode into raw map
-	raw := make(map[string]json.RawMessage)
+	raw := make(FilterExtensions)
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
 	}
@@ -145,7 +158,7 @@ func (f *Filter) UnmarshalJSON(data []byte) error {
 		if strings.HasPrefix(key, "#") {
 			// Leave Tags as `nil` unless tag fields exist
 			if f.Tags == nil {
-				f.Tags = make(map[string][]string)
+				f.Tags = make(TagFilters)
 			}
 			tagKey := key[1:]
 			var tagValues []string
@@ -165,24 +178,27 @@ func (f *Filter) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// Matches returns true if the event satisfies all filter conditions.
+// Supports prefix matching for IDs and authors, and tag filtering.
+// Does not account for custom extensions.
 func (f *Filter) Matches(event *Event) bool {
 	// Check ID
 	if len(f.IDs) > 0 {
-		if !matchesPrefix(event.ID, &f.IDs) {
+		if !matchesPrefix(event.ID, f.IDs) {
 			return false
 		}
 	}
 
 	// Check Author
 	if len(f.Authors) > 0 {
-		if !matchesPrefix(event.PubKey, &f.Authors) {
+		if !matchesPrefix(event.PubKey, f.Authors) {
 			return false
 		}
 	}
 
 	// Check Kind
 	if len(f.Kinds) > 0 {
-		if !matchesKinds(event.Kind, &f.Kinds) {
+		if !matchesKinds(event.Kind, f.Kinds) {
 			return false
 		}
 	}
@@ -194,7 +210,7 @@ func (f *Filter) Matches(event *Event) bool {
 
 	// Check Tags
 	if len(f.Tags) > 0 {
-		if !matchesTags(&event.Tags, &f.Tags) {
+		if !matchesTags(event.Tags, &f.Tags) {
 			return false
 		}
 	}
@@ -202,8 +218,8 @@ func (f *Filter) Matches(event *Event) bool {
 	return true
 }
 
-func matchesPrefix(candidate string, prefixes *[]string) bool {
-	for _, prefix := range *prefixes {
+func matchesPrefix(candidate string, prefixes []string) bool {
+	for _, prefix := range prefixes {
 		if strings.HasPrefix(candidate, prefix) {
 			return true
 		}
@@ -211,8 +227,8 @@ func matchesPrefix(candidate string, prefixes *[]string) bool {
 	return false
 }
 
-func matchesKinds(candidate int, kinds *[]int) bool {
-	for _, kind := range *kinds {
+func matchesKinds(candidate int, kinds []int) bool {
+	for _, kind := range kinds {
 		if candidate == kind {
 			return true
 		}
@@ -230,23 +246,32 @@ func matchesTimeRange(timestamp int, since *int, until *int) bool {
 	return true
 }
 
-func matchesTags(eventTags *[][]string, filterTags *map[string][]string) bool {
-	for tagName, filterValues := range *filterTags {
+func matchesTags(eventTags []Tag, tagFilters *TagFilters) bool {
+	// Build index of tags and values
+	eventIndex := make(map[string][]string, len(eventTags))
+	for _, tag := range eventTags {
+		if len(tag) < 2 {
+			continue
+		}
+		eventIndex[tag[0]] = append(eventIndex[tag[0]], tag[1])
+	}
+
+	// Check filters against the index
+	for tagName, filterValues := range *tagFilters {
+		// Skip empty tag filters (empty tag filters match all events)
 		if len(filterValues) == 0 {
-			return true
+			continue
+		}
+
+		eventValues, exists := eventIndex[tagName]
+		if !exists {
+			return false
 		}
 
 		found := false
-		for _, eventTag := range *eventTags {
-			if len(eventTag) < 2 {
-				continue
-			}
-			if eventTag[0] != tagName {
-				continue
-			}
-
-			for _, filterValue := range filterValues {
-				if eventTag[1] == filterValue {
+		for _, filterVal := range filterValues {
+			for _, eventVal := range eventValues {
+				if eventVal == filterVal {
 					found = true
 					break
 				}
@@ -261,5 +286,6 @@ func matchesTags(eventTags *[][]string, filterTags *map[string][]string) bool {
 		}
 	}
 
+	// If no filter explicitly fails, then the event is matched
 	return true
 }

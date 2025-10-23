@@ -11,12 +11,12 @@ func TestSignEvent(t *testing.T) {
 	actualSig, err := SignEvent(eventID, testSK)
 
 	assert.NoError(t, err)
-	assert.Equal(t, actualSig, expectedSig)
+	assert.Equal(t, expectedSig, actualSig)
 }
 
 func TestSignInvalidEventID(t *testing.T) {
 	badEventID := "thisisabadeventid"
-	expectedError := "invalid event id hex"
+	expectedError := "event id must be 64 hex characters"
 
 	_, err := SignEvent(badEventID, testSK)
 
@@ -26,7 +26,7 @@ func TestSignInvalidEventID(t *testing.T) {
 func TestSignInvalidPrivateKey(t *testing.T) {
 	eventID := testEvent.ID
 	badSK := "thisisabadsecretkey"
-	expectedError := "invalid private key hex"
+	expectedError := "private key must be 64 lowercase hex characters"
 
 	_, err := SignEvent(eventID, badSK)
 

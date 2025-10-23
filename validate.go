@@ -1,0 +1,96 @@
+package roots
+
+import (
+	"encoding/hex"
+	"fmt"
+
+	"github.com/btcsuite/btcd/btcec/v2/schnorr"
+)
+
+// Validate performs a complete event validation: structure, ID computation,
+// and signature verification. Returns the first error encountered.
+func (e *Event) Validate() error {
+	if err := e.ValidateStructure(); err != nil {
+		return err
+	}
+
+	if err := e.ValidateID(); err != nil {
+		return err
+	}
+
+	return e.ValidateSignature()
+}
+
+// ValidateStructure checks that all event fields conform to the protocol
+// specification: hex lengths, tag structure, and field formats.
+func (e *Event) ValidateStructure() error {
+	if !Hex64Pattern.MatchString(e.PubKey) {
+		return ErrMalformedPubKey
+	}
+
+	if !Hex64Pattern.MatchString(e.ID) {
+		return ErrMalformedID
+	}
+
+	if !Hex128Pattern.MatchString(e.Sig) {
+		return ErrMalformedSig
+	}
+
+	for _, tag := range e.Tags {
+		if len(tag) < 2 {
+			return ErrMalformedTag
+		}
+	}
+
+	return nil
+}
+
+// ValidateID recomputes the event ID and verifies it matches the stored ID field.
+func (e *Event) ValidateID() error {
+	computedID, err := e.GetID()
+	if err != nil {
+		return ErrFailedIDComp
+	}
+	if e.ID == "" {
+		return ErrNoEventID
+	}
+	if computedID != e.ID {
+		return fmt.Errorf("event id %q does not match computed id %q", e.ID, computedID)
+	}
+	return nil
+}
+
+// ValidateSignature verifies the event signature is cryptographically valid
+// for the event ID and public key using Schnorr verification.
+func (e *Event) ValidateSignature() error {
+	idBytes, err := hex.DecodeString(e.ID)
+	if err != nil {
+		return fmt.Errorf("invalid event id hex: %w", err)
+	}
+
+	sigBytes, err := hex.DecodeString(e.Sig)
+	if err != nil {
+		return fmt.Errorf("invalid event signature hex: %w", err)
+	}
+
+	pkBytes, err := hex.DecodeString(e.PubKey)
+	if err != nil {
+		return fmt.Errorf("invalid public key hex: %w", err)
+	}
+
+	signature, err := schnorr.ParseSignature(sigBytes)
+	if err != nil {
+		return fmt.Errorf("malformed signature: %w", err)
+	}
+
+	publicKey, err := schnorr.ParsePubKey(pkBytes)
+	if err != nil {
+		return fmt.Errorf("malformed public key: %w", err)
+	}
+
+	if signature.Verify(idBytes, publicKey) {
+		return nil
+	} else {
+		return ErrInvalidSig
+	}
+}

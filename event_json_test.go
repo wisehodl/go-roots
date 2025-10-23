@@ -27,7 +27,7 @@ func TestEventJSONRoundTrip(t *testing.T) {
 		PubKey:    testEvent.PubKey,
 		CreatedAt: testEvent.CreatedAt,
 		Kind:      testEvent.Kind,
-		Tags: [][]string{
+		Tags: []Tag{
 			{"a", "value"},
 			{"b", "value", "optional"},
 			{"name", "value", "optional", "optional"},
