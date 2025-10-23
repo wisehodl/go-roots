@@ -1,7 +1,6 @@
-// Roots is a purposefully minimal, core Nostr protocol library that provides
-// mathematically invariant primitives that define protocol compliance: event
-// structure, serialization, cryptographic signatures, and subscription
-// filters.
+// Roots is a purposefully minimal Nostr protocol library that provides only
+// the primitives that define protocol compliance: event structure,
+// serialization, cryptographic signatures, and subscription filters.
 package roots
 
 import (
