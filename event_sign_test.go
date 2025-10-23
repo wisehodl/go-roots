@@ -1,16 +1,17 @@
 package roots
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestSignEvent(t *testing.T) {
 	eventID := testEvent.ID
 	expectedSig := testEvent.Sig
-	computedSig, err := SignEvent(eventID, testSK)
+	actualSig, err := SignEvent(eventID, testSK)
 
-	expectOk(t, err)
-	expectEqualStrings(t, computedSig, expectedSig)
+	assert.NoError(t, err)
+	assert.Equal(t, actualSig, expectedSig)
 }
 
 func TestSignInvalidEventID(t *testing.T) {
@@ -19,8 +20,7 @@ func TestSignInvalidEventID(t *testing.T) {
 
 	_, err := SignEvent(badEventID, testSK)
 
-	expectError(t, err)
-	expectErrorSubstring(t, err, expectedError)
+	assert.ErrorContains(t, err, expectedError)
 }
 
 func TestSignInvalidPrivateKey(t *testing.T) {
@@ -30,6 +30,5 @@ func TestSignInvalidPrivateKey(t *testing.T) {
 
 	_, err := SignEvent(eventID, badSK)
 
-	expectError(t, err)
-	expectErrorSubstring(t, err, expectedError)
+	assert.ErrorContains(t, err, expectedError)
 }

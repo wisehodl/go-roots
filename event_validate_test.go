@@ -1,6 +1,7 @@
 package roots
 
 import (
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -184,10 +185,7 @@ func TestValidateEventStructure(t *testing.T) {
 	for _, tc := range structureTestCases {
 		t.Run(tc.name, func(t *testing.T) {
 			err := tc.event.ValidateStructure()
-			if err == nil {
-				t.Error("expected invalid event structure")
-			}
-			expectErrorSubstring(t, err, tc.expectedError)
+			assert.ErrorContains(t, err, tc.expectedError)
 		})
 	}
 }
@@ -204,7 +202,7 @@ func TestValidateEventIDFailure(t *testing.T) {
 	}
 
 	err := event.ValidateID()
-	expectErrorSubstring(t, err, "does not match computed id")
+	assert.ErrorContains(t, err, "does not match computed id")
 }
 
 func TestValidateSignature(t *testing.T) {
@@ -213,7 +211,7 @@ func TestValidateSignature(t *testing.T) {
 	publicKey := testEvent.PubKey
 	err := ValidateSignature(eventID, eventSig, publicKey)
 
-	expectOk(t, err)
+	assert.NoError(t, err)
 }
 
 func TestValidateInvalidSignature(t *testing.T) {
@@ -222,7 +220,7 @@ func TestValidateInvalidSignature(t *testing.T) {
 	publicKey := testEvent.PubKey
 	err := ValidateSignature(eventID, eventSig, publicKey)
 
-	expectErrorSubstring(t, err, "event signature is invalid")
+	assert.ErrorContains(t, err, "event signature is invalid")
 }
 
 type ValidateSignatureTestCase struct {
@@ -279,9 +277,7 @@ func TestValidateSignatureInvalidEventSignature(t *testing.T) {
 	for _, tc := range validateSignatureTestCases {
 		t.Run(tc.name, func(t *testing.T) {
 			err := ValidateSignature(tc.id, tc.sig, tc.pubkey)
-
-			expectError(t, err)
-			expectErrorSubstring(t, err, tc.expectedError)
+			assert.ErrorContains(t, err, tc.expectedError)
 		})
 	}
 }
@@ -301,5 +297,5 @@ func TestValidateEvent(t *testing.T) {
 	}
 
 	err := event.Validate()
-	expectOk(t, err)
+	assert.NoError(t, err)
 }

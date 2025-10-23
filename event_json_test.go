@@ -2,6 +2,7 @@ package roots
 
 import (
 	"encoding/json"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -16,8 +17,8 @@ func TestUnmarshalEventJSON(t *testing.T) {
 
 func TestMarshalEventJSON(t *testing.T) {
 	eventJSONBytes, err := json.Marshal(testEvent)
-	expectOk(t, err)
-	expectEqualStrings(t, string(eventJSONBytes), testEventJSON)
+	assert.NoError(t, err)
+	assert.Equal(t, testEventJSON, string(eventJSONBytes))
 }
 
 func TestEventJSONRoundTrip(t *testing.T) {
@@ -40,8 +41,8 @@ func TestEventJSONRoundTrip(t *testing.T) {
 		t.Error("test event is invalid")
 	}
 	eventJSON, err := json.Marshal(event)
-	expectOk(t, err)
-	expectEqualStrings(t, string(eventJSON), expectedJSON)
+	assert.NoError(t, err)
+	assert.Equal(t, expectedJSON, string(eventJSON))
 
 	unmarshalledEvent := Event{}
 	json.Unmarshal(eventJSON, &unmarshalledEvent)

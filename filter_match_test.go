@@ -2,6 +2,7 @@ package roots
 
 import (
 	"encoding/json"
+	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
 )
@@ -30,14 +31,14 @@ var (
 type FilterTestCase struct {
 	name        string
 	filter      Filter
-	matchingIDs []string
+	expectedIDs []string
 }
 
 var filterTestCases = []FilterTestCase{
 	{
 		name:   "empty filter",
 		filter: Filter{},
-		matchingIDs: []string{
+		expectedIDs: []string{
 			"e751d41f",
 			"562bc378",
 			"e67fa7b8",
@@ -53,7 +54,7 @@ var filterTestCases = []FilterTestCase{
 	{
 		name:   "empty id",
 		filter: Filter{IDs: []string{}},
-		matchingIDs: []string{
+		expectedIDs: []string{
 			"e751d41f",
 			"562bc378",
 			"e67fa7b8",
@@ -69,31 +70,31 @@ var filterTestCases = []FilterTestCase{
 	{
 		name:        "single id prefix",
 		filter:      Filter{IDs: []string{"e751d41f"}},
-		matchingIDs: []string{"e751d41f"},
+		expectedIDs: []string{"e751d41f"},
 	},
 
 	{
 		name:        "single full id",
 		filter:      Filter{IDs: []string{"e67fa7b84df6b0bb4c57f8719149de77f58955d7849da1be10b2267c72daad8b"}},
-		matchingIDs: []string{"e67fa7b8"},
+		expectedIDs: []string{"e67fa7b8"},
 	},
 
 	{
 		name:        "multiple id prefixes",
 		filter:      Filter{IDs: []string{"562bc378", "5e4c64f1"}},
-		matchingIDs: []string{"562bc378", "5e4c64f1"},
+		expectedIDs: []string{"562bc378", "5e4c64f1"},
 	},
 
 	{
 		name:        "no id match",
 		filter:      Filter{IDs: []string{"ffff"}},
-		matchingIDs: []string{},
+		expectedIDs: []string{},
 	},
 
 	{
 		name:   "empty author",
 		filter: Filter{Authors: []string{}},
-		matchingIDs: []string{
+		expectedIDs: []string{
 			"e751d41f",
 			"562bc378",
 			"e67fa7b8",
@@ -109,13 +110,13 @@ var filterTestCases = []FilterTestCase{
 	{
 		name:        "single author prefix",
 		filter:      Filter{Authors: []string{"d877e187"}},
-		matchingIDs: []string{"e751d41f", "562bc378", "e67fa7b8"},
+		expectedIDs: []string{"e751d41f", "562bc378", "e67fa7b8"},
 	},
 
 	{
 		name:   "multiple author prefixex",
 		filter: Filter{Authors: []string{"d877e187", "9e4b726a"}},
-		matchingIDs: []string{
+		expectedIDs: []string{
 			"e751d41f",
 			"562bc378",
 			"e67fa7b8",
@@ -128,19 +129,19 @@ var filterTestCases = []FilterTestCase{
 	{
 		name:        "single author full",
 		filter:      Filter{Authors: []string{"d877e187934bd942a71221b50ff2b426bd0777991b41b6c749119805dc40bcbe"}},
-		matchingIDs: []string{"e751d41f", "562bc378", "e67fa7b8"},
+		expectedIDs: []string{"e751d41f", "562bc378", "e67fa7b8"},
 	},
 
 	{
 		name:        "no author match",
 		filter:      Filter{Authors: []string{"ffff"}},
-		matchingIDs: []string{},
+		expectedIDs: []string{},
 	},
 
 	{
 		name:   "empty kind",
 		filter: Filter{Kinds: []int{}},
-		matchingIDs: []string{
+		expectedIDs: []string{
 			"e751d41f",
 			"562bc378",
 			"e67fa7b8",
@@ -156,13 +157,13 @@ var filterTestCases = []FilterTestCase{
 	{
 		name:        "single kind",
 		filter:      Filter{Kinds: []int{1}},
-		matchingIDs: []string{"562bc378", "7a5d83d4", "4b03b69a"},
+		expectedIDs: []string{"562bc378", "7a5d83d4", "4b03b69a"},
 	},
 
 	{
 		name:   "multiple kinds",
 		filter: Filter{Kinds: []int{0, 2}},
-		matchingIDs: []string{
+		expectedIDs: []string{
 			"e751d41f",
 			"e67fa7b8",
 			"5e4c64f1",
@@ -175,13 +176,13 @@ var filterTestCases = []FilterTestCase{
 	{
 		name:        "no kind match",
 		filter:      Filter{Kinds: []int{99}},
-		matchingIDs: []string{},
+		expectedIDs: []string{},
 	},
 
 	{
 		name:   "since only",
 		filter: Filter{Since: intPtr(5000)},
-		matchingIDs: []string{
+		expectedIDs: []string{
 			"7a5d83d4",
 			"3a122100",
 			"4a15d963",
@@ -193,7 +194,7 @@ var filterTestCases = []FilterTestCase{
 	{
 		name:   "until only",
 		filter: Filter{Until: intPtr(3000)},
-		matchingIDs: []string{
+		expectedIDs: []string{
 			"e751d41f",
 			"562bc378",
 			"e67fa7b8",
@@ -206,7 +207,7 @@ var filterTestCases = []FilterTestCase{
 			Since: intPtr(4000),
 			Until: intPtr(6000),
 		},
-		matchingIDs: []string{
+		expectedIDs: []string{
 			"5e4c64f1",
 			"7a5d83d4",
 			"3a122100",
@@ -218,7 +219,7 @@ var filterTestCases = []FilterTestCase{
 		filter: Filter{
 			Since: intPtr(10000),
 		},
-		matchingIDs: []string{},
+		expectedIDs: []string{},
 	},
 
 	{
@@ -228,7 +229,7 @@ var filterTestCases = []FilterTestCase{
 				"e": {},
 			},
 		},
-		matchingIDs: []string{
+		expectedIDs: []string{
 			"e751d41f",
 			"562bc378",
 			"e67fa7b8",
@@ -248,7 +249,7 @@ var filterTestCases = []FilterTestCase{
 				"e": {"5c83da77af1dec6d7289834998ad7aafbd9e2191396d75ec3cc27f5a77226f36"},
 			},
 		},
-		matchingIDs: []string{"562bc378"},
+		expectedIDs: []string{"562bc378"},
 	},
 
 	{
@@ -261,7 +262,7 @@ var filterTestCases = []FilterTestCase{
 				},
 			},
 		},
-		matchingIDs: []string{"562bc378", "3a122100"},
+		expectedIDs: []string{"562bc378", "3a122100"},
 	},
 
 	{
@@ -274,7 +275,7 @@ var filterTestCases = []FilterTestCase{
 				},
 			},
 		},
-		matchingIDs: []string{"562bc378"},
+		expectedIDs: []string{"562bc378"},
 	},
 
 	{
@@ -284,7 +285,7 @@ var filterTestCases = []FilterTestCase{
 				"p": {"91cf9b32f3735070f46c0a86a820a47efa08a5be6c9f4f8cf68e5b5b75c92d60"},
 			},
 		},
-		matchingIDs: []string{"e67fa7b8"},
+		expectedIDs: []string{"e67fa7b8"},
 	},
 
 	{
@@ -294,7 +295,7 @@ var filterTestCases = []FilterTestCase{
 				"emoji": {"🌊"},
 			},
 		},
-		matchingIDs: []string{"e67fa7b8"},
+		expectedIDs: []string{"e67fa7b8"},
 	},
 
 	{
@@ -305,7 +306,7 @@ var filterTestCases = []FilterTestCase{
 				"p": {"3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d"},
 			},
 		},
-		matchingIDs: []string{"3a122100"},
+		expectedIDs: []string{"3a122100"},
 	},
 
 	{
@@ -315,7 +316,7 @@ var filterTestCases = []FilterTestCase{
 				"p": {"ae3f2a91"},
 			},
 		},
-		matchingIDs: []string{},
+		expectedIDs: []string{},
 	},
 
 	{
@@ -325,7 +326,7 @@ var filterTestCases = []FilterTestCase{
 				"z": {"anything"},
 			},
 		},
-		matchingIDs: []string{},
+		expectedIDs: []string{},
 	},
 
 	{
@@ -334,7 +335,7 @@ var filterTestCases = []FilterTestCase{
 			Authors: []string{"d877e187"},
 			Kinds:   []int{1, 2},
 		},
-		matchingIDs: []string{
+		expectedIDs: []string{
 			"562bc378",
 			"e67fa7b8",
 		},
@@ -347,7 +348,7 @@ var filterTestCases = []FilterTestCase{
 			Since: intPtr(2000),
 			Until: intPtr(7000),
 		},
-		matchingIDs: []string{
+		expectedIDs: []string{
 			"5e4c64f1",
 			"4a15d963",
 		},
@@ -361,7 +362,7 @@ var filterTestCases = []FilterTestCase{
 				"power": {"fire"},
 			},
 		},
-		matchingIDs: []string{
+		expectedIDs: []string{
 			"4a15d963",
 		},
 	},
@@ -377,7 +378,7 @@ var filterTestCases = []FilterTestCase{
 				"power": {"fire"},
 			},
 		},
-		matchingIDs: []string{
+		expectedIDs: []string{
 			"4a15d963",
 		},
 	},
@@ -386,14 +387,14 @@ var filterTestCases = []FilterTestCase{
 func TestEventFilterMatching(t *testing.T) {
 	for _, tc := range filterTestCases {
 		t.Run(tc.name, func(t *testing.T) {
-			matchedIDs := []string{}
+			actualIDs := []string{}
 			for _, event := range testEvents {
 				if tc.filter.Matches(&event) {
-					matchedIDs = append(matchedIDs, event.ID[:8])
+					actualIDs = append(actualIDs, event.ID[:8])
 				}
 			}
 
-			expectEqualStringSlices(t, matchedIDs, tc.matchingIDs)
+			assert.Equal(t, tc.expectedIDs, actualIDs)
 		})
 	}
 }
