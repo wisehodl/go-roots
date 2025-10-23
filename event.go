@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"regexp"
 
@@ -26,7 +27,17 @@ var (
 	Hex128Pattern = regexp.MustCompile("^[a-f0-9]{128}$")
 )
 
-func (e Event) Serialize() ([]byte, error) {
+var (
+	ErrMalformedPubKey = errors.New("pubkey must be 64 lowercase hex characters")
+	ErrMalformedID     = errors.New("id must be 64 hex characters")
+	ErrMalformedSig    = errors.New("signature must be 128 hex characters")
+	ErrMalformedTag    = errors.New("tags must contain at least two elements")
+	ErrFailedIDComp    = errors.New("failed to compute event id")
+	ErrNoEventID       = errors.New("event id is empty")
+	ErrInvalidSig      = errors.New("event signature is invalid")
+)
+
+func (e *Event) Serialize() ([]byte, error) {
 	serialized := []interface{}{
 		0,
 		e.PubKey,
@@ -43,7 +54,7 @@ func (e Event) Serialize() ([]byte, error) {
 	return bytes, nil
 }
 
-func (e Event) GetID() (string, error) {
+func (e *Event) GetID() (string, error) {
 	bytes, err := e.Serialize()
 	if err != nil {
 		return "", err
@@ -73,7 +84,7 @@ func SignEvent(eventID, privateKeyHex string) (string, error) {
 	return hex.EncodeToString(sig.Serialize()), nil
 }
 
-func (e Event) Validate() error {
+func (e *Event) Validate() error {
 	if err := e.ValidateStructure(); err != nil {
 		return err
 	}
@@ -85,35 +96,35 @@ func (e Event) Validate() error {
 	return ValidateSignature(e.ID, e.Sig, e.PubKey)
 }
 
-func (e Event) ValidateStructure() error {
+func (e *Event) ValidateStructure() error {
 	if !Hex64Pattern.MatchString(e.PubKey) {
-		return fmt.Errorf("pubkey must be 64 lowercase hex characters")
+		return ErrMalformedPubKey
 	}
 
 	if !Hex64Pattern.MatchString(e.ID) {
-		return fmt.Errorf("id must be 64 hex characters")
+		return ErrMalformedID
 	}
 
 	if !Hex128Pattern.MatchString(e.Sig) {
-		return fmt.Errorf("signature must be 128 hex characters")
+		return ErrMalformedSig
 	}
 
 	for _, tag := range e.Tags {
 		if len(tag) < 2 {
-			return fmt.Errorf("tags must contain at least two elements")
+			return ErrMalformedTag
 		}
 	}
 
 	return nil
 }
 
-func (e Event) ValidateID() error {
+func (e *Event) ValidateID() error {
 	computedID, err := e.GetID()
 	if err != nil {
-		return fmt.Errorf("failed to compute event id")
+		return ErrFailedIDComp
 	}
 	if e.ID == "" {
-		return fmt.Errorf("event id is empty")
+		return ErrNoEventID
 	}
 	if computedID != e.ID {
 		return fmt.Errorf("event id %q does not match computed id %q", e.ID, computedID)
@@ -150,6 +161,6 @@ func ValidateSignature(eventID, eventSig, publicKeyHex string) error {
 	if signature.Verify(idBytes, publicKey) {
 		return nil
 	} else {
-		return fmt.Errorf("event signature is invalid")
+		return ErrInvalidSig
 	}
 }

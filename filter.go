@@ -17,7 +17,7 @@ type Filter struct {
 	Extensions map[string]json.RawMessage
 }
 
-func (f Filter) MarshalJSON() ([]byte, error) {
+func (f *Filter) MarshalJSON() ([]byte, error) {
 	outputMap := make(map[string]interface{})
 
 	// Add standard fields
@@ -48,16 +48,12 @@ func (f Filter) MarshalJSON() ([]byte, error) {
 	// Merge extensions
 	for key, raw := range f.Extensions {
 		// Disallow standard keys in extensions
-		standardKeys := []string{"ids", "authors", "kinds", "since", "until", "limit"}
-		found := false
-		for _, stdKey := range standardKeys {
-			// Skip standard key
-			if key == stdKey {
-				found = true
-				break
-			}
-		}
-		if found {
+		if key == "ids" ||
+			key == "authors" ||
+			key == "kinds" ||
+			key == "since" ||
+			key == "until" ||
+			key == "limit" {
 			continue
 		}
 
@@ -106,7 +102,7 @@ func (f *Filter) UnmarshalJSON(data []byte) error {
 	}
 
 	if v, ok := raw["since"]; ok {
-		if string(raw["since"]) == "null" {
+		if len(v) == 4 && string(v) == "null" {
 			f.Since = nil
 		} else {
 			var val int
@@ -119,7 +115,7 @@ func (f *Filter) UnmarshalJSON(data []byte) error {
 	}
 
 	if v, ok := raw["until"]; ok {
-		if string(raw["until"]) == "null" {
+		if len(v) == 4 && string(v) == "null" {
 			f.Until = nil
 		} else {
 			var val int
@@ -132,7 +128,7 @@ func (f *Filter) UnmarshalJSON(data []byte) error {
 	}
 
 	if v, ok := raw["limit"]; ok {
-		if string(raw["limit"]) == "null" {
+		if len(v) == 4 && string(v) == "null" {
 			f.Limit = nil
 		} else {
 			var val int
@@ -151,7 +147,7 @@ func (f *Filter) UnmarshalJSON(data []byte) error {
 			if f.Tags == nil {
 				f.Tags = make(map[string][]string)
 			}
-			tagKey := strings.TrimPrefix(key, "#")
+			tagKey := key[1:]
 			var tagValues []string
 			if err := json.Unmarshal(raw[key], &tagValues); err != nil {
 				return err
@@ -169,24 +165,24 @@ func (f *Filter) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (f Filter) Matches(event Event) bool {
+func (f *Filter) Matches(event *Event) bool {
 	// Check ID
 	if len(f.IDs) > 0 {
-		if !matchesPrefix(event.ID, f.IDs) {
+		if !matchesPrefix(event.ID, &f.IDs) {
 			return false
 		}
 	}
 
 	// Check Author
 	if len(f.Authors) > 0 {
-		if !matchesPrefix(event.PubKey, f.Authors) {
+		if !matchesPrefix(event.PubKey, &f.Authors) {
 			return false
 		}
 	}
 
 	// Check Kind
 	if len(f.Kinds) > 0 {
-		if !matchesKinds(event.Kind, f.Kinds) {
+		if !matchesKinds(event.Kind, &f.Kinds) {
 			return false
 		}
 	}
@@ -198,7 +194,7 @@ func (f Filter) Matches(event Event) bool {
 
 	// Check Tags
 	if len(f.Tags) > 0 {
-		if !matchesTags(event.Tags, f.Tags) {
+		if !matchesTags(&event.Tags, &f.Tags) {
 			return false
 		}
 	}
@@ -206,8 +202,8 @@ func (f Filter) Matches(event Event) bool {
 	return true
 }
 
-func matchesPrefix(candidate string, prefixes []string) bool {
-	for _, prefix := range prefixes {
+func matchesPrefix(candidate string, prefixes *[]string) bool {
+	for _, prefix := range *prefixes {
 		if strings.HasPrefix(candidate, prefix) {
 			return true
 		}
@@ -215,8 +211,8 @@ func matchesPrefix(candidate string, prefixes []string) bool {
 	return false
 }
 
-func matchesKinds(candidate int, kinds []int) bool {
-	for _, kind := range kinds {
+func matchesKinds(candidate int, kinds *[]int) bool {
+	for _, kind := range *kinds {
 		if candidate == kind {
 			return true
 		}
@@ -234,14 +230,14 @@ func matchesTimeRange(timestamp int, since *int, until *int) bool {
 	return true
 }
 
-func matchesTags(eventTags [][]string, filterTags map[string][]string) bool {
-	for tagName, filterValues := range filterTags {
+func matchesTags(eventTags *[][]string, filterTags *map[string][]string) bool {
+	for tagName, filterValues := range *filterTags {
 		if len(filterValues) == 0 {
 			return true
 		}
 
 		found := false
-		for _, eventTag := range eventTags {
+		for _, eventTag := range *eventTags {
 			if len(eventTag) < 2 {
 				continue
 			}

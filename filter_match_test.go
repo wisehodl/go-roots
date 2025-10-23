@@ -388,7 +388,7 @@ func TestEventFilterMatching(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			matchedIDs := []string{}
 			for _, event := range testEvents {
-				if tc.filter.Matches(event) {
+				if tc.filter.Matches(&event) {
 					matchedIDs = append(matchedIDs, event.ID[:8])
 				}
 			}
