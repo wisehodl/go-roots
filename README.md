@@ -1,5 +1,8 @@
 # Go-Roots - Nostr Protocol Library for Golang
 
+Source: https://git.wisehodl.dev/jay/go-roots
+Mirror: https://github.com/wisehodl/go-roots
+
 ## What this library does
 
 `go-roots` is a purposefully minimal Nostr protocol library for golang.
