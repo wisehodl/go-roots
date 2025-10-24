@@ -1,6 +1,7 @@
 # Go-Roots - Nostr Protocol Library for Golang
 
 Source: https://git.wisehodl.dev/jay/go-roots
+
 Mirror: https://github.com/wisehodl/go-roots
 
 ## What this library does
@@ -312,7 +313,9 @@ if err != nil {
 The `Extensions` field captures any JSON properties not recognized as standard filter fields or tag filters. This design allows the core library to remain frozen while storage and transport layers implement custom filtering behavior.
 
 **Standard fields**: `ids`, `authors`, `kinds`, `since`, `until`, `limit`
+
 **Tag filters**: Any key starting with `#` (e.g., `#e`, `#p`, `#emoji`)
+
 **Extensions**: Everything else
 
 During marshaling, Extensions merge into the output JSON. During unmarshaling, unrecognized fields populate Extensions. The `Matches()` method ignores Extensions, and the library expects higher protocol layers to implement their usage.
