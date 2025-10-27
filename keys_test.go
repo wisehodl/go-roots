@@ -2,19 +2,22 @@ package roots
 
 import (
 	"github.com/stretchr/testify/assert"
-	"regexp"
 	"testing"
 )
-
-var hexPattern = regexp.MustCompile("^[a-f0-9]{64}$")
 
 func TestGeneratePrivateKey(t *testing.T) {
 	sk, err := GeneratePrivateKey()
 
 	assert.NoError(t, err)
-	if !hexPattern.MatchString(sk) {
+	if !Hex64Pattern.MatchString(sk) {
 		t.Errorf("invalid private key format: %s", sk)
 	}
+}
+
+func TestGenerateUniquePrivateKeys(t *testing.T) {
+	sk1, _ := GeneratePrivateKey()
+	sk2, _ := GeneratePrivateKey()
+	assert.NotEqual(t, sk1, sk2)
 }
 
 func TestGetPublicKey(t *testing.T) {
