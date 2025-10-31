@@ -96,7 +96,7 @@ event := events.Event{
 }
 
 // 2. Compute the event ID
-id, err := event.GetID()
+id, err := events.GetID(event)
 if err != nil {
     log.Fatal(err)
 }
@@ -114,7 +114,7 @@ event.Sig = sig
 
 ```go
 // Returns canonical JSON: [0, pubkey, created_at, kind, tags, content]
-serialized, err := event.Serialize()
+serialized, err := events.Serialize(event)
 if err != nil {
     log.Fatal(err)
 }
@@ -123,7 +123,7 @@ if err != nil {
 #### Compute event ID manually
 
 ```go
-id, err := event.GetID()
+id, err := events.GetID(event)
 if err != nil {
     log.Fatal(err)
 }
@@ -138,7 +138,7 @@ if err != nil {
 
 ```go
 // Checks structure, ID computation, and signature
-if err := event.Validate(); err != nil {
+if err := events.Validate(event); err != nil {
     log.Printf("Invalid event: %v", err)
 }
 ```
@@ -147,17 +147,17 @@ if err := event.Validate(); err != nil {
 
 ```go
 // Check field formats and lengths
-if err := event.ValidateStructure(); err != nil {
+if err := events.ValidateStructure(event); err != nil {
     log.Printf("Malformed structure: %v", err)
 }
 
 // Verify ID matches computed hash
-if err := event.ValidateID(); err != nil {
+if err := events.ValidateID(event); err != nil {
     log.Printf("ID mismatch: %v", err)
 }
 
 // Verify cryptographic signature
-if err := event.ValidateSignature(); err != nil {
+if err := events.ValidateSignature(event); err != nil {
     log.Printf("Invalid signature: %v", err)
 }
 ```
@@ -186,7 +186,7 @@ if err != nil {
 }
 
 // Validate after unmarshaling
-if err := event.Validate(); err != nil {
+if err := events.Validate(event); err != nil {
     log.Printf("Received invalid event: %v", err)
 }
 ```
@@ -250,7 +250,7 @@ filter := filters.Filter{
     Kinds:   []int{1},
 }
 
-if filter.Matches(&event) {
+if filters.Matches(filter, event) {
     // Event satisfies all filter conditions
 }
 ```
@@ -269,7 +269,7 @@ filter := filters.Filter{
 
 var matches []events.Event
 for _, event := range events {
-    if filter.Matches(&event) {
+    if filters.Matches(filter, event) {
         matches = append(matches, event)
     }
 }
@@ -293,7 +293,7 @@ filter := filters.Filter{
     },
 }
 
-jsonBytes, err := filter.MarshalJSON()
+jsonBytes, err := filters.MarshalJSON(filter)
 // Result: {"ids":["abc123"],"kinds":[1],"#e":["event-id"],"search":"nostr"}
 ```
 
@@ -309,7 +309,7 @@ jsonData := `{
 }`
 
 var filter filters.Filter
-err := filter.UnmarshalJSON([]byte(jsonData))
+err := filters.UnmarshalJSON([]byte(jsonData), &filter)
 if err != nil {
     log.Fatal(err)
 }

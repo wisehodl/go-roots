@@ -8,7 +8,7 @@ import (
 
 // Serialize returns the canonical JSON array representation of the event.
 // used for ID computation: [0, pubkey, created_at, kind, tags, content].
-func (e *Event) Serialize() ([]byte, error) {
+func Serialize(e Event) ([]byte, error) {
 	serialized := []interface{}{
 		0,
 		e.PubKey,
@@ -27,8 +27,8 @@ func (e *Event) Serialize() ([]byte, error) {
 
 // GetID computes and returns the event ID as a lowercase, hex-encoded SHA-256 hash
 // of the serialized event.
-func (e *Event) GetID() (string, error) {
-	bytes, err := e.Serialize()
+func GetID(e Event) (string, error) {
+	bytes, err := Serialize(e)
 	if err != nil {
 		return "", err
 	}

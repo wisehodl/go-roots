@@ -9,21 +9,21 @@ import (
 
 // Validate performs a complete event validation: structure, ID computation,
 // and signature verification. Returns the first error encountered.
-func (e *Event) Validate() error {
-	if err := e.ValidateStructure(); err != nil {
+func Validate(e Event) error {
+	if err := ValidateStructure(e); err != nil {
 		return err
 	}
 
-	if err := e.ValidateID(); err != nil {
+	if err := ValidateID(e); err != nil {
 		return err
 	}
 
-	return e.ValidateSignature()
+	return ValidateSignature(e)
 }
 
 // ValidateStructure checks that all event fields conform to the protocol
 // specification: hex lengths, tag structure, and field formats.
-func (e *Event) ValidateStructure() error {
+func ValidateStructure(e Event) error {
 	if !Hex64Pattern.MatchString(e.PubKey) {
 		return errors.MalformedPubKey
 	}
@@ -46,8 +46,8 @@ func (e *Event) ValidateStructure() error {
 }
 
 // ValidateID recomputes the event ID and verifies it matches the stored ID field.
-func (e *Event) ValidateID() error {
-	computedID, err := e.GetID()
+func ValidateID(e Event) error {
+	computedID, err := GetID(e)
 	if err != nil {
 		return errors.FailedIDComp
 	}
@@ -62,7 +62,7 @@ func (e *Event) ValidateID() error {
 
 // ValidateSignature verifies the event signature is cryptographically valid
 // for the event ID and public key using Schnorr verification.
-func (e *Event) ValidateSignature() error {
+func ValidateSignature(e Event) error {
 	idBytes, err := hex.DecodeString(e.ID)
 	if err != nil {
 		return fmt.Errorf("invalid event id hex: %w", err)

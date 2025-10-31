@@ -184,7 +184,7 @@ var structureTestCases = []ValidateEventTestCase{
 func TestValidateEventStructure(t *testing.T) {
 	for _, tc := range structureTestCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := tc.event.ValidateStructure()
+			err := ValidateStructure(tc.event)
 			assert.ErrorContains(t, err, tc.expectedError)
 		})
 	}
@@ -201,7 +201,7 @@ func TestValidateEventIDFailure(t *testing.T) {
 		Sig:       testEvent.Sig,
 	}
 
-	err := event.ValidateID()
+	err := ValidateID(event)
 	assert.ErrorContains(t, err, "does not match computed id")
 }
 
@@ -211,7 +211,7 @@ func TestValidateSignature(t *testing.T) {
 		PubKey: testEvent.PubKey,
 		Sig:    testEvent.Sig,
 	}
-	err := event.ValidateSignature()
+	err := ValidateSignature(event)
 
 	assert.NoError(t, err)
 }
@@ -222,7 +222,7 @@ func TestValidateInvalidSignature(t *testing.T) {
 		PubKey: testEvent.PubKey,
 		Sig:    "9e43cbcf7e828a21c53fa35371ee79bffbfd7a3063ae46fc05ec623dd3186667c57e3d006488015e19247df35eb41c61013e051aa87860e23fa5ffbd44120482",
 	}
-	err := event.ValidateSignature()
+	err := ValidateSignature(event)
 
 	assert.ErrorContains(t, err, "event signature is invalid")
 }
@@ -281,7 +281,7 @@ func TestValidateSignatureInvalidEventSignature(t *testing.T) {
 	for _, tc := range validateSignatureTestCases {
 		t.Run(tc.name, func(t *testing.T) {
 			event := Event{ID: tc.id, PubKey: tc.pubkey, Sig: tc.sig}
-			err := event.ValidateSignature()
+			err := ValidateSignature(event)
 			assert.ErrorContains(t, err, tc.expectedError)
 		})
 	}
@@ -301,6 +301,6 @@ func TestValidateEvent(t *testing.T) {
 		Sig:     "668a715f1eb983172acf230d17bd283daedb2598adf8de4290bcc7eb0b802fdb60669d1e7d1104ac70393f4dbccd07e8abf897152af6ce6c0a75499874e27f14",
 	}
 
-	err := event.Validate()
+	err := Validate(event)
 	assert.NoError(t, err)
 }

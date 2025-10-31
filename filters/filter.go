@@ -29,7 +29,7 @@ type Filter struct {
 
 // MarshalJSON converts the filter to JSON with standard fields, tag filters
 // (prefixed with "#"), and extensions merged into a single object.
-func (f *Filter) MarshalJSON() ([]byte, error) {
+func MarshalJSON(f Filter) ([]byte, error) {
 	outputMap := make(map[string]interface{})
 
 	// Add standard fields
@@ -86,7 +86,7 @@ func (f *Filter) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON parses JSON into the filter, separating standard fields,
 // tag filters (keys starting with "#"), and extensions.
-func (f *Filter) UnmarshalJSON(data []byte) error {
+func UnmarshalJSON(data []byte, f *Filter) error {
 	// Decode into raw map
 	raw := make(FilterExtensions)
 	if err := json.Unmarshal(data, &raw); err != nil {
@@ -182,7 +182,7 @@ func (f *Filter) UnmarshalJSON(data []byte) error {
 // Matches returns true if the event satisfies all filter conditions.
 // Supports prefix matching for IDs and authors, and tag filtering.
 // Does not account for custom extensions.
-func (f *Filter) Matches(event *events.Event) bool {
+func Matches(f Filter, event events.Event) bool {
 	// Check ID
 	if len(f.IDs) > 0 {
 		if !matchesPrefix(event.ID, f.IDs) {

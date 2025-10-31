@@ -196,7 +196,7 @@ var idTestCases = []IDTestCase{
 func TestEventGetId(t *testing.T) {
 	for _, tc := range idTestCases {
 		t.Run(tc.name, func(t *testing.T) {
-			actual, err := tc.event.GetID()
+			actual, err := GetID(tc.event)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expected, actual)
 		})

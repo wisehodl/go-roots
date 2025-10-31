@@ -391,7 +391,7 @@ func TestEventFilterMatching(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			actualIDs := []string{}
 			for _, event := range testEvents {
-				if tc.filter.Matches(&event) {
+				if Matches(tc.filter, event) {
 					actualIDs = append(actualIDs, event.ID[:8])
 				}
 			}
@@ -416,5 +416,5 @@ func TestEventFilterMatchingSkipMalformedTags(t *testing.T) {
 		},
 	}
 
-	assert.True(t, filter.Matches(&event))
+	assert.True(t, Matches(filter, event))
 }
