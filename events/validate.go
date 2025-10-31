@@ -1,9 +1,9 @@
-package roots
+package events
 
 import (
 	"encoding/hex"
 	"fmt"
-
+	"git.wisehodl.dev/jay/go-roots/errors"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 )
 
@@ -25,20 +25,20 @@ func (e *Event) Validate() error {
 // specification: hex lengths, tag structure, and field formats.
 func (e *Event) ValidateStructure() error {
 	if !Hex64Pattern.MatchString(e.PubKey) {
-		return ErrMalformedPubKey
+		return errors.MalformedPubKey
 	}
 
 	if !Hex64Pattern.MatchString(e.ID) {
-		return ErrMalformedID
+		return errors.MalformedID
 	}
 
 	if !Hex128Pattern.MatchString(e.Sig) {
-		return ErrMalformedSig
+		return errors.MalformedSig
 	}
 
 	for _, tag := range e.Tags {
 		if len(tag) < 2 {
-			return ErrMalformedTag
+			return errors.MalformedTag
 		}
 	}
 
@@ -49,10 +49,10 @@ func (e *Event) ValidateStructure() error {
 func (e *Event) ValidateID() error {
 	computedID, err := e.GetID()
 	if err != nil {
-		return ErrFailedIDComp
+		return errors.FailedIDComp
 	}
 	if e.ID == "" {
-		return ErrNoEventID
+		return errors.NoEventID
 	}
 	if computedID != e.ID {
 		return fmt.Errorf("event id %q does not match computed id %q", e.ID, computedID)
@@ -91,6 +91,6 @@ func (e *Event) ValidateSignature() error {
 	if signature.Verify(idBytes, publicKey) {
 		return nil
 	} else {
-		return ErrInvalidSig
+		return errors.InvalidSig
 	}
 }

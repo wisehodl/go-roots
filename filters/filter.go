@@ -1,7 +1,8 @@
-package roots
+package filters
 
 import (
 	"encoding/json"
+	"git.wisehodl.dev/jay/go-roots/events"
 	"strings"
 )
 
@@ -181,7 +182,7 @@ func (f *Filter) UnmarshalJSON(data []byte) error {
 // Matches returns true if the event satisfies all filter conditions.
 // Supports prefix matching for IDs and authors, and tag filtering.
 // Does not account for custom extensions.
-func (f *Filter) Matches(event *Event) bool {
+func (f *Filter) Matches(event *events.Event) bool {
 	// Check ID
 	if len(f.IDs) > 0 {
 		if !matchesPrefix(event.ID, f.IDs) {
@@ -246,7 +247,7 @@ func matchesTimeRange(timestamp int, since *int, until *int) bool {
 	return true
 }
 
-func matchesTags(eventTags []Tag, tagFilters *TagFilters) bool {
+func matchesTags(eventTags []events.Tag, tagFilters *TagFilters) bool {
 	// Build index of tags and values
 	eventIndex := make(map[string][]string, len(eventTags))
 	for _, tag := range eventTags {

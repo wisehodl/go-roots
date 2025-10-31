@@ -1,4 +1,4 @@
-package roots
+package events
 
 import (
 	"github.com/stretchr/testify/assert"

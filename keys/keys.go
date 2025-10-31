@@ -1,7 +1,8 @@
-package roots
+package keys
 
 import (
 	"encoding/hex"
+	"git.wisehodl.dev/jay/go-roots/errors"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
 
@@ -20,11 +21,11 @@ func GeneratePrivateKey() (string, error) {
 // and returns the x-coordinate as 64 lowercase hex characters.
 func GetPublicKey(privateKeyHex string) (string, error) {
 	if len(privateKeyHex) != 64 {
-		return "", ErrMalformedPrivKey
+		return "", errors.MalformedPrivKey
 	}
 	skBytes, err := hex.DecodeString(privateKeyHex)
 	if err != nil {
-		return "", ErrMalformedPrivKey
+		return "", errors.MalformedPrivKey
 	}
 
 	pk := secp256k1.PrivKeyFromBytes(skBytes).PubKey()

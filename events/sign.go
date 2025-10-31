@@ -1,8 +1,9 @@
-package roots
+package events
 
 import (
 	"encoding/hex"
 	"fmt"
+	"git.wisehodl.dev/jay/go-roots/errors"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 )
@@ -12,12 +13,12 @@ import (
 func SignEvent(eventID, privateKeyHex string) (string, error) {
 	skBytes, err := hex.DecodeString(privateKeyHex)
 	if err != nil {
-		return "", ErrMalformedPrivKey
+		return "", errors.MalformedPrivKey
 	}
 
 	idBytes, err := hex.DecodeString(eventID)
 	if err != nil {
-		return "", ErrMalformedID
+		return "", errors.MalformedID
 	}
 
 	// discard public key return value

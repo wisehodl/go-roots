@@ -1,4 +1,4 @@
-package roots
+package filters
 
 func intPtr(i int) *int {
 	return &i

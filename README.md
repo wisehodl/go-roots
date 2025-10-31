@@ -31,13 +31,24 @@ mechanisms, and user interfaces.
 go get git.wisehodl.dev/jay/go-roots
 ```
 
-2. Import it with:
+If the primary repository is unavailable, use the `replace` directive in your go.mod file to get the package from the github mirror:
 
-```golang
-import "git.wisehodl.dev/jay/go-roots"
+```
+replace git.wisehodl.dev/jay/go-roots => github.com/wisehodl/go-roots latest
 ```
 
-3. Access it with the `roots` namespace.
+2. Import the packages:
+
+```golang
+import (
+    "git.wisehodl.dev/jay/go-roots/errors"
+    "git.wisehodl.dev/jay/go-roots/events"
+    "git.wisehodl.dev/jay/go-roots/filters"
+    "git.wisehodl.dev/jay/go-roots/keys"
+)
+```
+
+3. Access functions with appropriate namespaces.
 
 ## Usage Examples
 
@@ -46,12 +57,12 @@ import "git.wisehodl.dev/jay/go-roots"
 #### Generate a new keypair
 
 ```go
-privateKey, err := roots.GeneratePrivateKey()
+privateKey, err := keys.GeneratePrivateKey()
 if err != nil {
     log.Fatal(err)
 }
 
-publicKey, err := roots.GetPublicKey(privateKey)
+publicKey, err := keys.GetPublicKey(privateKey)
 if err != nil {
     log.Fatal(err)
 }
@@ -61,7 +72,7 @@ if err != nil {
 
 ```go
 privateKey := "f43a0435f69529f310bbd1d6263d2fbf0977f54bfe2310cc37ae5904b83bb167"
-publicKey, err := roots.GetPublicKey(privateKey)
+publicKey, err := keys.GetPublicKey(privateKey)
 // publicKey: "cfa87f35acbde29ba1ab3ee42de527b2cad33ac487e80cf2d6405ea0042c8fef"
 ```
 
@@ -73,11 +84,11 @@ publicKey, err := roots.GetPublicKey(privateKey)
 
 ```go
 // 1. Build the event structure
-event := roots.Event{
+event := events.Event{
     PubKey:    publicKey,
     CreatedAt: int(time.Now().Unix()),
     Kind:      1,
-    Tags: []roots.Tag{
+    Tags: []events.Tag{
         {"e", "5c83da77af1dec6d7289834998ad7aafbd9e2191396d75ec3cc27f5a77226f36"},
         {"p", "91cf9b32f3735070f46c0a86a820a47efa08a5be6c9f4f8cf68e5b5b75c92d60"},
     },
@@ -92,7 +103,7 @@ if err != nil {
 event.ID = id
 
 // 3. Sign the event
-sig, err := roots.SignEvent(id, privateKey)
+sig, err := events.SignEvent(id, privateKey)
 if err != nil {
     log.Fatal(err)
 }
@@ -168,7 +179,7 @@ if err != nil {
 #### Unmarshal event from JSON
 
 ```go
-var event roots.Event
+var event events.Event
 err := json.Unmarshal(jsonBytes, &event)
 if err != nil {
     log.Fatal(err)
@@ -190,7 +201,7 @@ if err := event.Validate(); err != nil {
 since := int(time.Now().Add(-24 * time.Hour).Unix())
 limit := 50
 
-filter := roots.Filter{
+filter := filters.Filter{
     IDs:     []string{"abc123", "def456"},  // Prefix match
     Authors: []string{"cfa87f35"},          // Prefix match
     Kinds:   []int{1, 6, 7},
@@ -202,9 +213,9 @@ filter := roots.Filter{
 #### Filter with tag conditions
 
 ```go
-filter := roots.Filter{
+filter := filters.Filter{
     Kinds: []int{1},
-    Tags: roots.TagFilters{
+    Tags: filters.TagFilters{
         "e": {"5c83da77af1dec6d7289834998ad7aafbd9e2191396d75ec3cc27f5a77226f36"},
         "p": {"91cf9b32f3735070f46c0a86a820a47efa08a5be6c9f4f8cf68e5b5b75c92d60"},
     },
@@ -216,9 +227,9 @@ filter := roots.Filter{
 ```go
 // Extensions allow arbitrary JSON fields beyond the standard filter spec.
 // For example, this is how to implement non-standard filters like 'search'.
-filter := roots.Filter{
+filter := filters.Filter{
     Kinds: []int{1},
-    Extensions: roots.FilterExtensions{
+    Extensions: filters.FilterExtensions{
         "search": json.RawMessage(`"bitcoin"`),
     },
 }
@@ -234,7 +245,7 @@ filter := roots.Filter{
 #### Match single event
 
 ```go
-filter := roots.Filter{
+filter := filters.Filter{
     Authors: []string{"cfa87f35"},
     Kinds:   []int{1},
 }
@@ -248,15 +259,15 @@ if filter.Matches(&event) {
 
 ```go
 since := int(time.Now().Add(-1 * time.Hour).Unix())
-filter := roots.Filter{
+filter := filters.Filter{
     Kinds: []int{1},
     Since: &since,
-    Tags: roots.TagFilters{
+    Tags: filters.TagFilters{
         "p": {"abc123", "def456"},  // OR within tag values
     },
 }
 
-var matches []roots.Event
+var matches []events.Event
 for _, event := range events {
     if filter.Matches(&event) {
         matches = append(matches, event)
@@ -271,13 +282,13 @@ for _, event := range events {
 #### Marshal filter to JSON
 
 ```go
-filter := roots.Filter{
+filter := filters.Filter{
     IDs:   []string{"abc123"},
     Kinds: []int{1},
-    Tags: roots.TagFilters{
+    Tags: filters.TagFilters{
         "e": {"event-id"},
     },
-    Extensions: roots.FilterExtensions{
+    Extensions: filters.FilterExtensions{
         "search": json.RawMessage(`"nostr"`),
     },
 }
@@ -297,7 +308,7 @@ jsonData := `{
     "search": "bitcoin"
 }`
 
-var filter roots.Filter
+var filter filters.Filter
 err := filter.UnmarshalJSON([]byte(jsonData))
 if err != nil {
     log.Fatal(err)
@@ -323,9 +334,9 @@ During marshaling, Extensions merge into the output JSON. During unmarshaling, u
 Example implementing search filter:
 
 ```go
-filter := roots.Filter{
+filter := filters.Filter{
     Kinds: []int{1},
-    Extensions: roots.FilterExtensions{
+    Extensions: filters.FilterExtensions{
         "search": json.RawMessage(`"bitcoin"`),
     },
 }
@@ -343,5 +354,5 @@ if searchRaw, ok := filter.Extensions["search"]; ok {
 This library contains a comprehensive suite of unit tests. Run them with:
 
 ```bash
-go test
+go test ./...
 ```

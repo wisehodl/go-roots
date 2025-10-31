@@ -1,13 +1,14 @@
-package roots
+package filters
 
 import (
 	"encoding/json"
+	"git.wisehodl.dev/jay/go-roots/events"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
 )
 
-var testEvents []Event
+var testEvents []events.Event
 
 func init() {
 	data, err := os.ReadFile("testdata/test_events.json")
@@ -403,8 +404,8 @@ func TestEventFilterMatching(t *testing.T) {
 // TestEventFilterMatchingSkipMalformedTags documents that filter.Matches()
 // skips malformed tags during tag matching
 func TestEventFilterMatchingSkipMalformedTags(t *testing.T) {
-	event := Event{
-		Tags: []Tag{
+	event := events.Event{
+		Tags: []events.Tag{
 			{"malformed"},
 			{"valid", "value"},
 		},

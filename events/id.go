@@ -1,4 +1,4 @@
-package roots
+package events
 
 import (
 	"crypto/sha256"
