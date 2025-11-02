@@ -6,7 +6,7 @@ Mirror: https://github.com/wisehodl/go-roots
 
 ## What this library does
 
-`go-roots` is a purposefully minimal Nostr protocol library for golang.
+`go-roots` is a consensus-layer Nostr protocol library for golang.
 It only provides primitives that define protocol compliance:
 
 - Event Structure
