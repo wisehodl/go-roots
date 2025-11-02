@@ -1,1 +1,1 @@
-code2prompt -e "go.sum" -e "README.md" -e "c2p" .
+code2prompt -e "go.sum" -e "c2p" .
