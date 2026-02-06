@@ -195,11 +195,15 @@ if err := events.Validate(&event); err != nil {
 
 ### Custom Event Implementation
 
-`go-roots` ships with a concrete `StringEvent` struct that fulfills the `Event` interface. `StringEvent` uses hex strings matching the protocol's wire format. Applications optimizing for memory footprint in storage-heavy scenarios may define custom implementations.
+`go-roots` ships with a concrete `StringEvent` struct that fulfills the `Event`
+interface. `StringEvent` uses hex strings matching the protocol's wire format.
+Applications that require different characteristics may define custom
+implementations.
 
 #### Example: Compact Events
 
-An extension library implementing compact events that use byte arrays rather than strings for cryptographic fields may look like this:
+An extension library implementing compact events that use byte arrays rather
+than strings for cryptographic fields may look like this:
 
 ```go
 // CompactEvent stores cryptographic fields as byte arrays
@@ -217,7 +221,9 @@ type CompactEvent struct {
 // Implement Event interface methods
 ```
 
-`go-roots` validation and signing functions perform conversions between hex strings and bytes. To avoid extraneous type conversions, the extension library would ship with relevant functions optimized for its purpose.
+`go-roots` validation and signing functions perform conversions between hex
+strings and bytes. To avoid extraneous type conversions, the extension library
+would ship with relevant functions optimized for its purpose.
 
 ```go
 // Extension library provides optimized functions operating on raw bytes
