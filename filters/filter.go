@@ -185,33 +185,33 @@ func UnmarshalJSON(data []byte, f *Filter) error {
 func Matches(f Filter, event events.Event) bool {
 	// Check ID
 	if len(f.IDs) > 0 {
-		if !matchesPrefix(event.ID, f.IDs) {
+		if !matchesPrefix(event.GetID(), f.IDs) {
 			return false
 		}
 	}
 
 	// Check Author
 	if len(f.Authors) > 0 {
-		if !matchesPrefix(event.PubKey, f.Authors) {
+		if !matchesPrefix(event.GetPubKey(), f.Authors) {
 			return false
 		}
 	}
 
 	// Check Kind
 	if len(f.Kinds) > 0 {
-		if !matchesKinds(event.Kind, f.Kinds) {
+		if !matchesKinds(event.GetKind(), f.Kinds) {
 			return false
 		}
 	}
 
 	// Check Timestamp
-	if !matchesTimeRange(event.CreatedAt, f.Since, f.Until) {
+	if !matchesTimeRange(event.GetCreatedAt(), f.Since, f.Until) {
 		return false
 	}
 
 	// Check Tags
 	if len(f.Tags) > 0 {
-		if !matchesTags(event.Tags, &f.Tags) {
+		if !matchesTags(event.GetTags(), &f.Tags) {
 			return false
 		}
 	}

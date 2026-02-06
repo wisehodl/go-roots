@@ -24,19 +24,19 @@ func Validate(e Event) error {
 // ValidateStructure checks that all event fields conform to the protocol
 // specification: hex lengths, tag structure, and field formats.
 func ValidateStructure(e Event) error {
-	if !Hex64Pattern.MatchString(e.PubKey) {
+	if !Hex64Pattern.MatchString(e.GetPubKey()) {
 		return errors.MalformedPubKey
 	}
 
-	if !Hex64Pattern.MatchString(e.ID) {
+	if !Hex64Pattern.MatchString(e.GetID()) {
 		return errors.MalformedID
 	}
 
-	if !Hex128Pattern.MatchString(e.Sig) {
+	if !Hex128Pattern.MatchString(e.GetSig()) {
 		return errors.MalformedSig
 	}
 
-	for _, tag := range e.Tags {
+	for _, tag := range e.GetTags() {
 		if len(tag) < 2 {
 			return errors.MalformedTag
 		}
@@ -51,11 +51,11 @@ func ValidateID(e Event) error {
 	if err != nil {
 		return errors.FailedIDComp
 	}
-	if e.ID == "" {
+	if e.GetID() == "" {
 		return errors.NoEventID
 	}
-	if computedID != e.ID {
-		return fmt.Errorf("event id %q does not match computed id %q", e.ID, computedID)
+	if computedID != e.GetID() {
+		return fmt.Errorf("event id %q does not match computed id %q", e.GetID(), computedID)
 	}
 	return nil
 }
@@ -63,17 +63,17 @@ func ValidateID(e Event) error {
 // ValidateSignature verifies the event signature is cryptographically valid
 // for the event ID and public key using Schnorr verification.
 func ValidateSignature(e Event) error {
-	idBytes, err := hex.DecodeString(e.ID)
+	idBytes, err := hex.DecodeString(e.GetID())
 	if err != nil {
 		return fmt.Errorf("invalid event id hex: %w", err)
 	}
 
-	sigBytes, err := hex.DecodeString(e.Sig)
+	sigBytes, err := hex.DecodeString(e.GetSig())
 	if err != nil {
 		return fmt.Errorf("invalid event signature hex: %w", err)
 	}
 
-	pkBytes, err := hex.DecodeString(e.PubKey)
+	pkBytes, err := hex.DecodeString(e.GetPubKey())
 	if err != nil {
 		return fmt.Errorf("invalid public key hex: %w", err)
 	}

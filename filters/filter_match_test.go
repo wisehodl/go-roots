@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-var testEvents []events.Event
+var testEvents []events.StringEvent
 
 func init() {
 	data, err := os.ReadFile("testdata/test_events.json")
@@ -391,8 +391,8 @@ func TestEventFilterMatching(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			actualIDs := []string{}
 			for _, event := range testEvents {
-				if Matches(tc.filter, event) {
-					actualIDs = append(actualIDs, event.ID[:8])
+				if Matches(tc.filter, &event) {
+					actualIDs = append(actualIDs, event.GetID()[:8])
 				}
 			}
 
@@ -404,7 +404,7 @@ func TestEventFilterMatching(t *testing.T) {
 // TestEventFilterMatchingSkipMalformedTags documents that filter.Matches()
 // skips malformed tags during tag matching
 func TestEventFilterMatchingSkipMalformedTags(t *testing.T) {
-	event := events.Event{
+	event := &events.StringEvent{
 		Tags: []events.Tag{
 			{"malformed"},
 			{"valid", "value"},

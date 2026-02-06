@@ -16,7 +16,7 @@ It only provides primitives that define protocol compliance:
 
 ## What this library does not do
 
-`go-roots` serves a foundation for other libraries and applications to
+`go-roots` serves as a foundation for other libraries and applications to
 implement higher level abstractions of the Nostr protocol on top of it,
 including message transport, semantic event definitions, event storage
 mechanisms, and user interfaces.
@@ -31,10 +31,10 @@ mechanisms, and user interfaces.
 go get git.wisehodl.dev/jay/go-roots
 ```
 
-If the primary repository is unavailable, use the `replace` directive in your go.mod file to get the package from the github mirror:
+If the primary repository is unavailable, use the `replace` directive in your go.mod file with a specific version to get the package from the github mirror:
 
 ```
-replace git.wisehodl.dev/jay/go-roots => github.com/wisehodl/go-roots latest
+replace git.wisehodl.dev/jay/go-roots => github.com/wisehodl/go-roots <version>
 ```
 
 2. Import the packages:
@@ -84,7 +84,7 @@ publicKey, err := keys.GetPublicKey(privateKey)
 
 ```go
 // 1. Build the event structure
-event := events.Event{
+event := &events.StringEvent{
     PubKey:    publicKey,
     CreatedAt: int(time.Now().Unix()),
     Kind:      1,
@@ -100,14 +100,14 @@ id, err := events.GetID(event)
 if err != nil {
     log.Fatal(err)
 }
-event.ID = id
+event.SetID(id)
 
 // 3. Sign the event
 sig, err := events.SignEvent(id, privateKey)
 if err != nil {
     log.Fatal(err)
 }
-event.Sig = sig
+event.SetSig(sig)
 ```
 
 #### Serialize an event for ID computation
@@ -123,11 +123,11 @@ if err != nil {
 #### Compute event ID manually
 
 ```go
+// Returns lowercase hex SHA-256 hash of serialized form
 id, err := events.GetID(event)
 if err != nil {
     log.Fatal(err)
 }
-// Returns lowercase hex SHA-256 hash of serialized form
 ```
 
 ---
@@ -173,26 +173,62 @@ jsonBytes, err := json.Marshal(event)
 if err != nil {
     log.Fatal(err)
 }
-// Standard encoding/json works with Event struct tags
+// Standard encoding/json works with StringEvent struct tags
 ```
 
 #### Unmarshal event from JSON
 
 ```go
-var event events.Event
+var event events.StringEvent
 err := json.Unmarshal(jsonBytes, &event)
 if err != nil {
     log.Fatal(err)
 }
 
 // Validate after unmarshaling
-if err := events.Validate(event); err != nil {
+if err := events.Validate(&event); err != nil {
     log.Printf("Received invalid event: %v", err)
 }
 ```
 
 ---
 
+### Custom Event Implementation
+
+`go-roots` ships with a concrete `StringEvent` struct that fulfills the `Event` interface. `StringEvent` uses hex strings matching the protocol's wire format. Applications optimizing for memory footprint in storage-heavy scenarios may define custom implementations.
+
+#### Example: Compact Events
+
+An extension library implementing compact events that use byte arrays rather than strings for cryptographic fields may look like this:
+
+```go
+// CompactEvent stores cryptographic fields as byte arrays
+// to reduce memory footprint in high-throughput scenarios
+type CompactEvent struct {
+    id        [32]byte
+    pubkey    [32]byte
+    createdAt int
+    kind      int
+    tags      []events.Tag
+    content   string
+    sig       [64]byte
+}
+
+// Implement Event interface methods
+```
+
+`go-roots` validation and signing functions perform conversions between hex strings and bytes. To avoid extraneous type conversions, the extension library would ship with relevant functions optimized for its purpose.
+
+```go
+// Extension library provides optimized functions operating on raw bytes
+func SignCompact(idBytes, skBytes [32]byte) ([64]byte, error)
+func ValidateCompact(e *CompactEvent) error
+// ... remaining optimized functions
+```
+
+Applications choose which implementation to use.
+
+---
 ### Filter Creation
 
 #### Basic filter with standard fields
@@ -267,9 +303,9 @@ filter := filters.Filter{
     },
 }
 
-var matches []events.Event
+var matches []events.StringEvent
 for _, event := range events {
-    if filters.Matches(filter, event) {
+    if filters.Matches(filter, &event) {
         matches = append(matches, event)
     }
 }

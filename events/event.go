@@ -12,16 +12,23 @@ import (
 // and subsequent elements are optional.
 type Tag []string
 
-// Event represents a Nostr protocol event, with its seven required fields.
-// All fields must be present for a valid event.
-type Event struct {
-	ID        string `json:"id"`
-	PubKey    string `json:"pubkey"`
-	CreatedAt int    `json:"created_at"`
-	Kind      int    `json:"kind"`
-	Tags      []Tag  `json:"tags"`
-	Content   string `json:"content"`
-	Sig       string `json:"sig"`
+// Event is the stable contract for Nostr event operations.
+// Implementations may optimize internal representation while
+// satisfying this interface.
+type Event interface {
+	GetID() string
+	GetPubKey() string
+	GetCreatedAt() int
+	GetKind() int
+	GetTags() []Tag
+	GetContent() string
+	GetSig() string
+
+	// SetID sets the event ID after computation
+	SetID(id string)
+
+	// SetSig sets the signature after signing
+	SetSig(sig string)
 }
 
 var (

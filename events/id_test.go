@@ -7,14 +7,14 @@ import (
 
 type IDTestCase struct {
 	name     string
-	event    Event
+	event    StringEvent
 	expected string
 }
 
 var idTestCases = []IDTestCase{
 	{
 		name: "minimal event",
-		event: Event{
+		event: StringEvent{
 			PubKey:    testEvent.PubKey,
 			CreatedAt: testEvent.CreatedAt,
 			Kind:      1,
@@ -26,7 +26,7 @@ var idTestCases = []IDTestCase{
 
 	{
 		name: "alphanumeric content",
-		event: Event{
+		event: StringEvent{
 			PubKey:    testEvent.PubKey,
 			CreatedAt: testEvent.CreatedAt,
 			Kind:      1,
@@ -38,7 +38,7 @@ var idTestCases = []IDTestCase{
 
 	{
 		name: "unicode content",
-		event: Event{
+		event: StringEvent{
 			PubKey:    testEvent.PubKey,
 			CreatedAt: testEvent.CreatedAt,
 			Kind:      1,
@@ -50,7 +50,7 @@ var idTestCases = []IDTestCase{
 
 	{
 		name: "escaped content",
-		event: Event{
+		event: StringEvent{
 			PubKey:    testEvent.PubKey,
 			CreatedAt: testEvent.CreatedAt,
 			Kind:      1,
@@ -62,7 +62,7 @@ var idTestCases = []IDTestCase{
 
 	{
 		name: "json content",
-		event: Event{
+		event: StringEvent{
 			PubKey:    testEvent.PubKey,
 			CreatedAt: testEvent.CreatedAt,
 			Kind:      1,
@@ -74,7 +74,7 @@ var idTestCases = []IDTestCase{
 
 	{
 		name: "empty tag",
-		event: Event{
+		event: StringEvent{
 			PubKey:    testEvent.PubKey,
 			CreatedAt: testEvent.CreatedAt,
 			Kind:      1,
@@ -88,7 +88,7 @@ var idTestCases = []IDTestCase{
 
 	{
 		name: "single tag",
-		event: Event{
+		event: StringEvent{
 			PubKey:    testEvent.PubKey,
 			CreatedAt: testEvent.CreatedAt,
 			Kind:      1,
@@ -102,7 +102,7 @@ var idTestCases = []IDTestCase{
 
 	{
 		name: "optional tag values",
-		event: Event{
+		event: StringEvent{
 			PubKey:    testEvent.PubKey,
 			CreatedAt: testEvent.CreatedAt,
 			Kind:      1,
@@ -116,7 +116,7 @@ var idTestCases = []IDTestCase{
 
 	{
 		name: "multiple tags",
-		event: Event{
+		event: StringEvent{
 			PubKey:    testEvent.PubKey,
 			CreatedAt: testEvent.CreatedAt,
 			Kind:      1,
@@ -132,7 +132,7 @@ var idTestCases = []IDTestCase{
 
 	{
 		name: "unicode tag",
-		event: Event{
+		event: StringEvent{
 			PubKey:    testEvent.PubKey,
 			CreatedAt: testEvent.CreatedAt,
 			Kind:      1,
@@ -146,7 +146,7 @@ var idTestCases = []IDTestCase{
 
 	{
 		name: "zero timestamp",
-		event: Event{
+		event: StringEvent{
 			PubKey:    testEvent.PubKey,
 			CreatedAt: 0,
 			Kind:      1,
@@ -158,7 +158,7 @@ var idTestCases = []IDTestCase{
 
 	{
 		name: "negative timestamp",
-		event: Event{
+		event: StringEvent{
 			PubKey:    testEvent.PubKey,
 			CreatedAt: -1760740551,
 			Kind:      1,
@@ -170,7 +170,7 @@ var idTestCases = []IDTestCase{
 
 	{
 		name: "max int64 timestamp",
-		event: Event{
+		event: StringEvent{
 			PubKey:    testEvent.PubKey,
 			CreatedAt: 9223372036854775807,
 			Kind:      1,
@@ -182,7 +182,7 @@ var idTestCases = []IDTestCase{
 
 	{
 		name: "different kind",
-		event: Event{
+		event: StringEvent{
 			PubKey:    testEvent.PubKey,
 			CreatedAt: testEvent.CreatedAt,
 			Kind:      20021,
@@ -196,7 +196,7 @@ var idTestCases = []IDTestCase{
 func TestEventGetId(t *testing.T) {
 	for _, tc := range idTestCases {
 		t.Run(tc.name, func(t *testing.T) {
-			actual, err := GetID(tc.event)
+			actual, err := GetID(&tc.event)
 			assert.NoError(t, err)
 			assert.Equal(t, tc.expected, actual)
 		})

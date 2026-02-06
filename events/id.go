@@ -11,11 +11,11 @@ import (
 func Serialize(e Event) ([]byte, error) {
 	serialized := []interface{}{
 		0,
-		e.PubKey,
-		e.CreatedAt,
-		e.Kind,
-		e.Tags,
-		e.Content,
+		e.GetPubKey(),
+		e.GetCreatedAt(),
+		e.GetKind(),
+		e.GetTags(),
+		e.GetContent(),
 	}
 
 	bytes, err := json.Marshal(serialized)
