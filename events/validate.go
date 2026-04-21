@@ -1,6 +1,7 @@
 package events
 
 import (
+	"bytes"
 	"encoding/hex"
 	"fmt"
 	"git.wisehodl.dev/jay/go-roots/errors"
@@ -14,25 +15,26 @@ func Validate(e Event) error {
 		return err
 	}
 
-	if err := ValidateID(e); err != nil {
+	idBytes, err := checkIDMatch(e)
+	if err != nil {
 		return err
 	}
 
-	return ValidateSignature(e)
+	return validateSignatureBytes(idBytes, e.Sig, e.PubKey)
 }
 
 // ValidateStructure checks that all event fields conform to the protocol
 // specification: hex lengths, tag structure, and field formats.
 func ValidateStructure(e Event) error {
-	if !Hex64Pattern.MatchString(e.PubKey) {
+	if !isLowerHex(e.PubKey, 64) {
 		return errors.MalformedPubKey
 	}
 
-	if !Hex64Pattern.MatchString(e.ID) {
+	if !isLowerHex(e.ID, 64) {
 		return errors.MalformedID
 	}
 
-	if !Hex128Pattern.MatchString(e.Sig) {
+	if !isLowerHex(e.Sig, 128) {
 		return errors.MalformedSig
 	}
 
@@ -47,14 +49,8 @@ func ValidateStructure(e Event) error {
 
 // ValidateID recomputes the event ID and verifies it matches the stored ID field.
 func ValidateID(e Event) error {
-	computedID := GetID(e)
-	if e.ID == "" {
-		return errors.NoEventID
-	}
-	if computedID != e.ID {
-		return fmt.Errorf("event id %q does not match computed id %q", e.ID, computedID)
-	}
-	return nil
+	_, err := checkIDMatch(e)
+	return err
 }
 
 // ValidateSignature verifies the event signature is cryptographically valid
@@ -64,13 +60,32 @@ func ValidateSignature(e Event) error {
 	if err != nil {
 		return fmt.Errorf("invalid event id hex: %w", err)
 	}
+	return validateSignatureBytes(idBytes, e.Sig, e.PubKey)
+}
 
-	sigBytes, err := hex.DecodeString(e.Sig)
+// Helpers
+
+func checkIDMatch(e Event) ([]byte, error) {
+	idHash := GetIDBytes(e)
+	idBytes, err := hex.DecodeString(e.ID)
+	if err != nil {
+		return nil, errors.MalformedID
+	}
+	if !bytes.Equal(idBytes, idHash[:]) {
+		return nil, fmt.Errorf(
+			"event id %q does not match computed id %q",
+			e.ID, hex.EncodeToString(idHash[:]))
+	}
+	return idBytes, nil
+}
+
+func validateSignatureBytes(idBytes []byte, sigHex, pkHex string) error {
+	sigBytes, err := hex.DecodeString(sigHex)
 	if err != nil {
 		return fmt.Errorf("invalid event signature hex: %w", err)
 	}
 
-	pkBytes, err := hex.DecodeString(e.PubKey)
+	pkBytes, err := hex.DecodeString(pkHex)
 	if err != nil {
 		return fmt.Errorf("invalid public key hex: %w", err)
 	}
@@ -87,7 +102,20 @@ func ValidateSignature(e Event) error {
 
 	if signature.Verify(idBytes, publicKey) {
 		return nil
-	} else {
-		return errors.InvalidSig
 	}
+
+	return errors.InvalidSig
+}
+
+func isLowerHex(s string, n int) bool {
+	if len(s) != n {
+		return false
+	}
+	for i := 0; i < n; i++ {
+		c := s[i]
+		if (c < '0' || c > '9') && (c < 'a' || c > 'f') {
+			return false
+		}
+	}
+	return true
 }

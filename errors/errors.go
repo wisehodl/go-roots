@@ -20,9 +20,6 @@ var (
 	// MalformedTag indicates an event tag contains fewer than two elements.
 	MalformedTag = errors.New("tags must contain at least two elements")
 
-	// NoEventID indicates the event ID field is empty.
-	NoEventID = errors.New("event id is empty")
-
 	// InvalidSig indicates the event signature failed cryptographic validation.
 	InvalidSig = errors.New("event signature is invalid")
 )
