@@ -47,10 +47,7 @@ func ValidateStructure(e Event) error {
 
 // ValidateID recomputes the event ID and verifies it matches the stored ID field.
 func ValidateID(e Event) error {
-	computedID, err := GetID(e)
-	if err != nil {
-		return errors.FailedIDComp
-	}
+	computedID := GetID(e)
 	if e.ID == "" {
 		return errors.NoEventID
 	}

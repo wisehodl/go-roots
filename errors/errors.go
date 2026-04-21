@@ -20,9 +20,6 @@ var (
 	// MalformedTag indicates an event tag contains fewer than two elements.
 	MalformedTag = errors.New("tags must contain at least two elements")
 
-	// FailedIDComp indicates the event ID could not be computed during validation.
-	FailedIDComp = errors.New("failed to compute event id")
-
 	// NoEventID indicates the event ID field is empty.
 	NoEventID = errors.New("event id is empty")
 

@@ -96,10 +96,7 @@ event := events.Event{
 }
 
 // 2. Compute the event ID
-id, err := events.GetID(event)
-if err != nil {
-    log.Fatal(err)
-}
+id := events.GetID(event)
 event.ID = id
 
 // 3. Sign the event
@@ -114,19 +111,13 @@ event.Sig = sig
 
 ```go
 // Returns canonical JSON: [0, pubkey, created_at, kind, tags, content]
-serialized, err := events.Serialize(event)
-if err != nil {
-    log.Fatal(err)
-}
+serialized := events.Serialize(event)
 ```
 
 #### Compute event ID manually
 
 ```go
-id, err := events.GetID(event)
-if err != nil {
-    log.Fatal(err)
-}
+id := events.GetID(event)
 // Returns lowercase hex SHA-256 hash of serialized form
 ```
 
