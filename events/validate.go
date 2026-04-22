@@ -26,15 +26,15 @@ func Validate(e Event) error {
 // ValidateStructure checks that all event fields conform to the protocol
 // specification: hex lengths, tag structure, and field formats.
 func ValidateStructure(e Event) error {
-	if !isLowerHex(e.PubKey, 64) {
+	if !IsValidKey(e.PubKey) {
 		return errors.MalformedPubKey
 	}
 
-	if !isLowerHex(e.ID, 64) {
+	if !IsValidID(e.ID) {
 		return errors.MalformedID
 	}
 
-	if !isLowerHex(e.Sig, 128) {
+	if !IsValidSig(e.Sig) {
 		return errors.MalformedSig
 	}
 
@@ -61,6 +61,23 @@ func ValidateSignature(e Event) error {
 		return fmt.Errorf("invalid event id hex: %w", err)
 	}
 	return validateSignatureBytes(idBytes, e.Sig, e.PubKey)
+}
+
+// Value validators
+
+// IsValidKey verifies that a public or private key is properly formatted.
+func IsValidKey(value string) bool {
+	return isLowerHex(value, 64)
+}
+
+// IsValidKey verifies that an event id is properly formatted.
+func IsValidID(value string) bool {
+	return isLowerHex(value, 64)
+}
+
+// IsValidKey verifies that an event signature is properly formatted.
+func IsValidSig(value string) bool {
+	return isLowerHex(value, 128)
 }
 
 // Helpers
