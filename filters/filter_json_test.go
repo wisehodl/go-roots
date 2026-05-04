@@ -37,57 +37,57 @@ var marshalTestCases = []FilterMarshalTestCase{
 	// ID cases
 	{
 		name:     "nil IDs",
-		filter:   Filter{IDs: nil},
+		filter:   NewFilter(WithIDs(nil)),
 		expected: `{}`,
 	},
 
 	{
 		name:     "empty IDs",
-		filter:   Filter{IDs: []string{}},
+		filter:   NewFilter(WithIDs([]string{})),
 		expected: `{"ids":[]}`,
 	},
 
 	{
 		name:     "populated IDs",
-		filter:   Filter{IDs: []string{"abc", "123"}},
+		filter:   NewFilter(WithIDs([]string{"abc", "123"})),
 		expected: `{"ids":["abc","123"]}`,
 	},
 
 	// Author cases
 	{
 		name:     "nil Authors",
-		filter:   Filter{Authors: nil},
+		filter:   NewFilter(WithAuthors(nil)),
 		expected: `{}`,
 	},
 
 	{
 		name:     "empty Authors",
-		filter:   Filter{Authors: []string{}},
+		filter:   NewFilter(WithAuthors([]string{})),
 		expected: `{"authors":[]}`,
 	},
 
 	{
 		name:     "populated Authors",
-		filter:   Filter{Authors: []string{"abc", "123"}},
+		filter:   NewFilter(WithAuthors([]string{"abc", "123"})),
 		expected: `{"authors":["abc","123"]}`,
 	},
 
 	// Kind cases
 	{
 		name:     "nil Kinds",
-		filter:   Filter{Kinds: nil},
+		filter:   NewFilter(WithKinds(nil)),
 		expected: `{}`,
 	},
 
 	{
 		name:     "empty Kinds",
-		filter:   Filter{Kinds: []int{}},
+		filter:   NewFilter(WithKinds([]int{})),
 		expected: `{"kinds":[]}`,
 	},
 
 	{
 		name:     "populated Kinds",
-		filter:   Filter{Kinds: []int{1, 20001}},
+		filter:   NewFilter(WithKinds([]int{1, 20001})),
 		expected: `{"kinds":[1,20001]}`,
 	},
 
@@ -100,7 +100,7 @@ var marshalTestCases = []FilterMarshalTestCase{
 
 	{
 		name:     "populated Since",
-		filter:   Filter{Since: intPtr(1000)},
+		filter:   NewFilter(WithSince(1000)),
 		expected: `{"since":1000}`,
 	},
 
@@ -113,7 +113,7 @@ var marshalTestCases = []FilterMarshalTestCase{
 
 	{
 		name:     "populated Until",
-		filter:   Filter{Until: intPtr(1000)},
+		filter:   NewFilter(WithUntil(1000)),
 		expected: `{"until":1000}`,
 	},
 
@@ -126,27 +126,31 @@ var marshalTestCases = []FilterMarshalTestCase{
 
 	{
 		name:     "populated Limit",
-		filter:   Filter{Limit: intPtr(100)},
+		filter:   NewFilter(WithLimit(100)),
 		expected: `{"limit":100}`,
 	},
 
 	// All standard fields
 	{
 		name: "all standard fields",
-		filter: Filter{
-			IDs:     []string{"abc", "123"},
-			Authors: []string{"def", "456"},
-			Kinds:   []int{1, 200, 3000},
-			Since:   intPtr(1000),
-			Until:   intPtr(2000),
-			Limit:   intPtr(100),
-		},
+		filter: NewFilter(
+			WithIDs([]string{"abc", "123"}),
+			WithAuthors([]string{"def", "456"}),
+			WithKinds([]int{1, 200, 3000}),
+			WithSince(1000),
+			WithUntil(2000),
+			WithLimit(100),
+		),
 		expected: `{"ids":["abc","123"],"authors":["def","456"],"kinds":[1,200,3000],"since":1000,"until":2000,"limit":100}`,
 	},
 
 	{
-		name:     "mixed fields",
-		filter:   Filter{IDs: nil, Authors: []string{}, Kinds: []int{1}},
+		name: "mixed fields",
+		filter: NewFilter(
+			WithIDs(nil),
+			WithAuthors([]string{}),
+			WithKinds([]int{1}),
+		),
 		expected: `{"authors":[],"kinds":[1]}`,
 	},
 
@@ -159,164 +163,138 @@ var marshalTestCases = []FilterMarshalTestCase{
 
 	{
 		name: "single-letter tag",
-		filter: Filter{Tags: map[string][]string{
-			"e": {"event1"},
-		}},
+		filter: NewFilter(
+			WithTag("e", []string{"event1"}),
+		),
 		expected: `{"#e":["event1"]}`,
 	},
 
 	{
 		name: "multi-letter tag",
-		filter: Filter{Tags: map[string][]string{
-			"emoji": {"🔥", "💧"},
-		}},
+		filter: NewFilter(
+			WithTag("emoji", []string{"🔥", "💧"}),
+		),
 		expected: `{"#emoji":["🔥","💧"]}`,
 	},
 
 	{
 		name: "empty tag array",
-		filter: Filter{Tags: map[string][]string{
-			"p": {},
-		}},
+		filter: NewFilter(
+			WithTag("p", []string{}),
+		),
 		expected: `{"#p":[]}`,
 	},
 
 	{
 		name: "multiple tags",
-		filter: Filter{Tags: map[string][]string{
-			"e": {"event1", "event2"},
-			"p": {"pubkey1", "pubkey2"},
-		}},
+		filter: NewFilter(
+			WithTag("e", []string{"event1", "event2"}),
+			WithTag("p", []string{"pubkey1", "pubkey2"}),
+		),
 		expected: `{"#e":["event1","event2"],"#p":["pubkey1","pubkey2"]}`,
 	},
 
 	// Extensions
 	{
 		name: "simple extension",
-		filter: Filter{
-			Extensions: map[string]json.RawMessage{
-				"search": json.RawMessage(`"query"`),
-			},
-		},
+		filter: NewFilter(
+			WithExtension("search", json.RawMessage(`"query"`)),
+		),
 		expected: `{"search":"query"}`,
 	},
 
 	{
 		name: "extension with nested object",
-		filter: Filter{
-			Extensions: map[string]json.RawMessage{
-				"meta": json.RawMessage(`{"author":"alice","score":99}`),
-			},
-		},
+		filter: NewFilter(
+			WithExtension("meta", json.RawMessage(`{"author":"alice","score":99}`)),
+		),
 		expected: `{"meta":{"author":"alice","score":99}}`,
 	},
 
 	{
 		name: "extension with nested array",
-		filter: Filter{
-			Extensions: map[string]json.RawMessage{
-				"items": json.RawMessage(`[1,2,3]`),
-			},
-		},
+		filter: NewFilter(
+			WithExtension("items", json.RawMessage(`[1,2,3]`)),
+		),
 		expected: `{"items":[1,2,3]}`,
 	},
 
 	{
 		name: "extension with complex nested structure",
-		filter: Filter{
-			Extensions: map[string]json.RawMessage{
-				"data": json.RawMessage(`{"users":[{"id":1}],"count":5}`),
-			},
-		},
+		filter: NewFilter(
+			WithExtension("data", json.RawMessage(`{"users":[{"id":1}],"count":5}`)),
+		),
 		expected: `{"data":{"users":[{"id":1}],"count":5}}`,
 	},
 
 	{
 		name: "multiple extensions",
-		filter: Filter{
-			Extensions: map[string]json.RawMessage{
-				"search": json.RawMessage(`"x"`),
-				"depth":  json.RawMessage(`3`),
-			},
-		},
+		filter: NewFilter(
+			WithExtension("search", json.RawMessage(`"x"`)),
+			WithExtension("depth", json.RawMessage(`3`)),
+		),
 		expected: `{"search":"x","depth":3}`,
 	},
 
 	// Extension Collisions
 	{
 		name: "extension collides with standard field - IDs",
-		filter: Filter{
-			IDs: []string{"real"},
-			Extensions: map[string]json.RawMessage{
-				"ids": json.RawMessage(`["fake"]`),
-			},
-		},
+		filter: NewFilter(
+			WithIDs([]string{"real"}),
+			WithExtension("ids", json.RawMessage(`["fake"]`)),
+		),
 		expected: `{"ids":["real"]}`,
 	},
 
 	{
 		name: "extension collides with standard field - Since",
-		filter: Filter{
-			Since: intPtr(100),
-			Extensions: map[string]json.RawMessage{
-				"since": json.RawMessage(`999`),
-			},
-		},
+		filter: NewFilter(
+			WithSince(100),
+			WithExtension("since", json.RawMessage(`999`)),
+		),
 		expected: `{"since":100}`,
 	},
 
 	{
 		name: "extension collides with multiple standard fields",
-		filter: Filter{
-			Authors: []string{"a"},
-			Kinds:   []int{1},
-			Extensions: map[string]json.RawMessage{
-				"authors": json.RawMessage(`["b"]`),
-				"kinds":   json.RawMessage(`[2]`),
-			},
-		},
+		filter: NewFilter(
+			WithAuthors([]string{"a"}),
+			WithKinds([]int{1}),
+			WithExtension("authors", json.RawMessage(`["b"]`)),
+			WithExtension("kinds", json.RawMessage(`[2]`)),
+		),
 		expected: `{"authors":["a"],"kinds":[1]}`,
 	},
 
 	{
 		name: "extension collides with tag field - #e",
-		filter: Filter{
-			Extensions: map[string]json.RawMessage{
-				"#e": json.RawMessage(`["fakeevent"]`),
-			},
-		},
+		filter: NewFilter(
+			WithExtension("#e", json.RawMessage(`["fakeevent"]`)),
+		),
 		expected: `{}`,
 	},
 
 	{
 		name: "extension collides with standard and tag fields",
-		filter: Filter{
-			Authors: []string{"realauthor"},
-			Tags: map[string][]string{
-				"e": {"realevent"},
-			},
-			Extensions: map[string]json.RawMessage{
-				"authors": json.RawMessage(`["fakeauthor"]`),
-				"#e":      json.RawMessage(`["fakeevent"]`),
-			},
-		},
+		filter: NewFilter(
+			WithAuthors([]string{"realauthor"}),
+			WithTag("e", []string{"realevent"}),
+			WithExtension("authors", json.RawMessage(`["fakeauthor"]`)),
+			WithExtension("#e", json.RawMessage(`["fakeevent"]`)),
+		),
 		expected: `{"authors":["realauthor"],"#e":["realevent"]}`,
 	},
 
 	// Kitchen Sink
 	{
 		name: "filter with all field types",
-		filter: Filter{
-			IDs:   []string{"x"},
-			Since: intPtr(100),
-			Tags: map[string][]string{
-				"e": {"y"},
-			},
-			Extensions: map[string]json.RawMessage{
-				"search": json.RawMessage(`"z"`),
-				"ids":    json.RawMessage(`["fakeid"]`),
-			},
-		},
+		filter: NewFilter(
+			WithIDs([]string{"x"}),
+			WithSince(100),
+			WithTag("e", []string{"y"}),
+			WithExtension("search", json.RawMessage(`"z"`)),
+			WithExtension("ids", json.RawMessage(`["fakeid"]`)),
+		),
 		expected: `{"ids":["x"],"since":100,"#e":["y"],"search":"z"}`,
 	},
 }
@@ -325,64 +303,64 @@ var unmarshalTestCases = []FilterUnmarshalTestCase{
 	{
 		name:     "empty object",
 		input:    `{}`,
-		expected: Filter{},
+		expected: NewFilter(),
 	},
 
 	// ID cases
 	{
 		name:     "null IDs",
 		input:    `{"ids": null}`,
-		expected: Filter{IDs: nil},
+		expected: NewFilter(WithIDs(nil)),
 	},
 
 	{
 		name:     "empty IDs",
 		input:    `{"ids": []}`,
-		expected: Filter{IDs: []string{}},
+		expected: NewFilter(WithIDs([]string{})),
 	},
 
 	{
 		name:     "populated IDs",
 		input:    `{"ids": ["abc","123"]}`,
-		expected: Filter{IDs: []string{"abc", "123"}},
+		expected: NewFilter(WithIDs([]string{"abc", "123"})),
 	},
 
 	// Author cases
 	{
 		name:     "null Authors",
 		input:    `{"authors": null}`,
-		expected: Filter{Authors: nil},
+		expected: NewFilter(WithAuthors(nil)),
 	},
 
 	{
 		name:     "empty Authors",
 		input:    `{"authors": []}`,
-		expected: Filter{Authors: []string{}},
+		expected: NewFilter(WithAuthors([]string{})),
 	},
 
 	{
 		name:     "populated Authors",
 		input:    `{"authors": ["abc","123"]}`,
-		expected: Filter{Authors: []string{"abc", "123"}},
+		expected: NewFilter(WithAuthors([]string{"abc", "123"})),
 	},
 
 	// Kind cases
 	{
 		name:     "null Kinds",
 		input:    `{"kinds": null}`,
-		expected: Filter{Kinds: nil},
+		expected: NewFilter(WithKinds(nil)),
 	},
 
 	{
 		name:     "empty Kinds",
 		input:    `{"kinds": []}`,
-		expected: Filter{Kinds: []int{}},
+		expected: NewFilter(WithKinds([]int{})),
 	},
 
 	{
 		name:     "populated Kinds",
 		input:    `{"kinds": [1,2,3]}`,
-		expected: Filter{Kinds: []int{1, 2, 3}},
+		expected: NewFilter(WithKinds([]int{1, 2, 3})),
 	},
 
 	// Since cases
@@ -395,7 +373,7 @@ var unmarshalTestCases = []FilterUnmarshalTestCase{
 	{
 		name:     "populated Since",
 		input:    `{"since": 1000}`,
-		expected: Filter{Since: intPtr(1000)},
+		expected: NewFilter(WithSince(1000)),
 	},
 
 	// Until cases
@@ -408,7 +386,7 @@ var unmarshalTestCases = []FilterUnmarshalTestCase{
 	{
 		name:     "populated Until",
 		input:    `{"until": 1000}`,
-		expected: Filter{Until: intPtr(1000)},
+		expected: NewFilter(WithUntil(1000)),
 	},
 
 	// Limit cases
@@ -421,161 +399,146 @@ var unmarshalTestCases = []FilterUnmarshalTestCase{
 	{
 		name:     "populated Limit",
 		input:    `{"limit": 1000}`,
-		expected: Filter{Limit: intPtr(1000)},
+		expected: NewFilter(WithLimit(1000)),
 	},
 
 	// All standard fields
 	{
 		name:  "all standard fields",
 		input: `{"ids":["abc","123"],"authors":["def","456"],"kinds":[1,200,3000],"since":1000,"until":2000,"limit":100}`,
-		expected: Filter{
-			IDs:     []string{"abc", "123"},
-			Authors: []string{"def", "456"},
-			Kinds:   []int{1, 200, 3000},
-			Since:   intPtr(1000),
-			Until:   intPtr(2000),
-			Limit:   intPtr(100),
-		},
+		expected: NewFilter(
+			WithIDs([]string{"abc", "123"}),
+			WithAuthors([]string{"def", "456"}),
+			WithKinds([]int{1, 200, 3000}),
+			WithSince(1000),
+			WithUntil(2000),
+			WithLimit(100),
+		),
 	},
 
 	{
-		name:     "mixed fields",
-		input:    `{"ids": null, "authors": [], "kinds": [1]}`,
-		expected: Filter{IDs: nil, Authors: []string{}, Kinds: []int{1}},
+		name:  "mixed fields",
+		input: `{"ids": null, "authors": [], "kinds": [1]}`,
+		expected: NewFilter(
+			WithIDs(nil),
+			WithAuthors([]string{}),
+			WithKinds([]int{1}),
+		),
 	},
 
 	{
 		name:     "zero int pointers",
 		input:    `{"since": 0, "until": 0, "limit": 0}`,
-		expected: Filter{Since: intPtr(0), Until: intPtr(0), Limit: intPtr(0)},
+		expected: NewFilter(WithSince(0), WithUntil(0), WithLimit(0)),
 	},
 
 	// Tags
 	{
 		name:     "single-letter tag",
 		input:    `{"#e":["event1"]}`,
-		expected: Filter{Tags: map[string][]string{"e": {"event1"}}},
+		expected: NewFilter(WithTag("e", []string{"event1"})),
 	},
 
 	{
 		name:     "multi-letter tag",
 		input:    `{"#emoji":["🔥","💧"]}`,
-		expected: Filter{Tags: map[string][]string{"emoji": {"🔥", "💧"}}},
+		expected: NewFilter(WithTag("emoji", []string{"🔥", "💧"})),
 	},
 
 	{
 		name:     "empty tag array",
 		input:    `{"#p":[]}`,
-		expected: Filter{Tags: map[string][]string{"p": {}}},
+		expected: NewFilter(WithTag("p", []string{})),
 	},
 
 	{
 		name:  "multiple tags",
 		input: `{"#p":["pubkey1","pubkey2"],"#e":["event1","event2"]}`,
-		expected: Filter{Tags: map[string][]string{
-			"p": {"pubkey1", "pubkey2"},
-			"e": {"event1", "event2"},
-		}},
+		expected: NewFilter(
+			WithTag("p", []string{"pubkey1", "pubkey2"}),
+			WithTag("e", []string{"event1", "event2"}),
+		),
 	},
 
 	{
 		name:     "null tag",
 		input:    `{"#p":null}`,
-		expected: Filter{Tags: map[string][]string{"p": nil}},
+		expected: NewFilter(WithTag("p", nil)),
 	},
 
 	// Extensions
 	{
 		name:  "simple extension",
 		input: `{"search":"query"}`,
-		expected: Filter{Extensions: map[string]json.RawMessage{
-			"search": json.RawMessage(`"query"`),
-		},
-		},
+		expected: NewFilter(
+			WithExtension("search", json.RawMessage(`"query"`)),
+		),
 	},
 
 	{
 		name:  "extension with nested object",
 		input: `{"meta":{"author":"alice","score":99}}`,
-		expected: Filter{
-			Extensions: map[string]json.RawMessage{
-				"meta": json.RawMessage(`{"author":"alice","score":99}`),
-			},
-		},
+		expected: NewFilter(
+			WithExtension("meta", json.RawMessage(`{"author":"alice","score":99}`)),
+		),
 	},
 
 	{
 		name:  "extension with nested array",
 		input: `{"items":[1,2,3]}`,
-		expected: Filter{
-			Extensions: map[string]json.RawMessage{
-				"items": json.RawMessage(`[1,2,3]`),
-			},
-		},
+		expected: NewFilter(
+			WithExtension("items", json.RawMessage(`[1,2,3]`)),
+		),
 	},
 
 	{
 		name:  "extension with complex nested structure",
 		input: `{"data":{"level1":{"level2":[{"id":1}]}}}`,
-		expected: Filter{
-			Extensions: map[string]json.RawMessage{
-				"data": json.RawMessage(`{"level1":{"level2":[{"id":1}]}}`),
-			},
-		},
+		expected: NewFilter(
+			WithExtension("data", json.RawMessage(`{"level1":{"level2":[{"id":1}]}}`)),
+		),
 	},
 
 	{
 		name:  "multiple extensions",
 		input: `{"search":"x","custom":true,"depth":3}`,
-		expected: Filter{
-			Extensions: map[string]json.RawMessage{
-				"search": json.RawMessage(`"x"`),
-				"custom": json.RawMessage(`true`),
-				"depth":  json.RawMessage(`3`),
-			},
-		},
+		expected: NewFilter(
+			WithExtension("search", json.RawMessage(`"x"`)),
+			WithExtension("custom", json.RawMessage(`true`)),
+			WithExtension("depth", json.RawMessage(`3`)),
+		),
 	},
 
 	{
 		name:  "extension with null value",
 		input: `{"optional":null}`,
-		expected: Filter{
-			Extensions: map[string]json.RawMessage{
-				"optional": json.RawMessage(`null`),
-			},
-		},
+		expected: NewFilter(
+			WithExtension("optional", json.RawMessage(`null`)),
+		),
 	},
 
 	// Kitchen Sink
 	{
 		name:  "extension with null value",
 		input: `{"ids":["x"],"since":100,"#e":["y"],"search":"z"}`,
-		expected: Filter{
-			IDs:   []string{"x"},
-			Since: intPtr(100),
-			Tags: map[string][]string{
-				"e": {"y"},
-			},
-			Extensions: map[string]json.RawMessage{
-				"search": json.RawMessage(`"z"`),
-			},
-		},
+		expected: NewFilter(
+			WithIDs([]string{"x"}),
+			WithSince(100),
+			WithTag("e", []string{"y"}),
+			WithExtension("search", json.RawMessage(`"z"`)),
+		),
 	},
 }
 
 var roundTripTestCases = []FilterRoundTripTestCase{
 	{
 		name: "fully populated filter",
-		filter: Filter{
-			IDs:   []string{"x"},
-			Since: intPtr(100),
-			Tags: map[string][]string{
-				"e": {"y"},
-			},
-			Extensions: map[string]json.RawMessage{
-				"search": json.RawMessage(`"z"`),
-			},
-		},
+		filter: NewFilter(
+			WithIDs([]string{"x"}),
+			WithSince(100),
+			WithTag("e", []string{"y"}),
+			WithExtension("search", json.RawMessage(`"z"`)),
+		),
 	},
 }
 

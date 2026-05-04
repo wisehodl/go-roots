@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"git.wisehodl.dev/jay/go-roots/events"
 	"strings"
+	"time"
 )
 
 // TagFilters maps tag names to arrays of values for tag-based filtering
@@ -20,11 +21,92 @@ type Filter struct {
 	IDs        []string
 	Authors    []string
 	Kinds      []int
-	Since      *int
-	Until      *int
+	Since      *int64
+	Until      *int64
 	Limit      *int
 	Tags       TagFilters
 	Extensions FilterExtensions
+}
+
+func NewFilter(opts ...FilterOption) Filter {
+	f := Filter{}
+	for _, opt := range opts {
+		opt(&f)
+	}
+	return f
+}
+
+type FilterOption func(*Filter)
+
+func WithIDs(ids []string) FilterOption {
+	return func(f *Filter) {
+		f.IDs = ids
+	}
+}
+
+func WithAuthors(authors []string) FilterOption {
+	return func(f *Filter) {
+		f.Authors = authors
+	}
+}
+
+func WithKinds(kinds []int) FilterOption {
+	return func(f *Filter) {
+		f.Kinds = kinds
+	}
+}
+
+func WithSince(since int64) FilterOption {
+	return func(f *Filter) {
+		ptr := since
+		f.Since = &ptr
+	}
+}
+
+func WithUntil(until int64) FilterOption {
+	return func(f *Filter) {
+		ptr := until
+		f.Until = &ptr
+	}
+}
+
+func WithUntilTime(until time.Time) FilterOption {
+	return func(f *Filter) {
+		untilInt := until.Unix()
+		f.Until = &untilInt
+	}
+}
+
+func WithSinceTime(since time.Time) FilterOption {
+	return func(f *Filter) {
+		sinceInt := since.Unix()
+		f.Since = &sinceInt
+	}
+}
+
+func WithLimit(limit int) FilterOption {
+	return func(f *Filter) {
+		ptr := limit
+		f.Limit = &ptr
+	}
+}
+
+func WithTag(l string, v []string) FilterOption {
+	return func(f *Filter) {
+		if f.Tags == nil {
+			f.Tags = make(TagFilters)
+		}
+		f.Tags[l] = v
+	}
+}
+
+func WithExtension(l string, e json.RawMessage) FilterOption {
+	return func(f *Filter) {
+		if f.Extensions == nil {
+			f.Extensions = make(FilterExtensions)
+		}
+		f.Extensions[l] = e
+	}
 }
 
 // MarshalJSON converts the filter to JSON with standard fields, tag filters
@@ -119,7 +201,7 @@ func UnmarshalJSON(data []byte, f *Filter) error {
 		if len(v) == 4 && string(v) == "null" {
 			f.Since = nil
 		} else {
-			var val int
+			var val int64
 			if err := json.Unmarshal(v, &val); err != nil {
 				return err
 			}
@@ -132,7 +214,7 @@ func UnmarshalJSON(data []byte, f *Filter) error {
 		if len(v) == 4 && string(v) == "null" {
 			f.Until = nil
 		} else {
-			var val int
+			var val int64
 			if err := json.Unmarshal(v, &val); err != nil {
 				return err
 			}
@@ -237,7 +319,7 @@ func matchesKinds(candidate int, kinds []int) bool {
 	return false
 }
 
-func matchesTimeRange(timestamp int, since *int, until *int) bool {
+func matchesTimeRange(timestamp int64, since *int64, until *int64) bool {
 	if since != nil && timestamp < *since {
 		return false
 	}

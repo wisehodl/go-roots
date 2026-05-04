@@ -21,7 +21,7 @@ func init() {
 }
 
 // Test keypairs corresponding to test events, for reference.
-var (
+const (
 	nayru_sk  = "1784be782585dfa97712afe12585d13ee608b624cf564116fa143c31a124d31e"
 	nayru_pk  = "d877e187934bd942a71221b50ff2b426bd0777991b41b6c749119805dc40bcbe"
 	farore_sk = "03d0611c41048a9108a75bf5d023180b5cf2d2d24e2e6b83def29de977315bb3"
@@ -39,7 +39,7 @@ type FilterTestCase struct {
 var filterTestCases = []FilterTestCase{
 	{
 		name:   "empty filter",
-		filter: Filter{},
+		filter: NewFilter(),
 		expectedIDs: []string{
 			"e751d41f",
 			"562bc378",
@@ -55,7 +55,7 @@ var filterTestCases = []FilterTestCase{
 
 	{
 		name:   "empty id",
-		filter: Filter{IDs: []string{}},
+		filter: NewFilter(WithIDs([]string{})),
 		expectedIDs: []string{
 			"e751d41f",
 			"562bc378",
@@ -71,31 +71,34 @@ var filterTestCases = []FilterTestCase{
 
 	{
 		name:        "single id prefix",
-		filter:      Filter{IDs: []string{"e751d41f"}},
+		filter:      NewFilter(WithIDs([]string{"e751d41f"})),
 		expectedIDs: []string{"e751d41f"},
 	},
 
 	{
-		name:        "single full id",
-		filter:      Filter{IDs: []string{"e67fa7b84df6b0bb4c57f8719149de77f58955d7849da1be10b2267c72daad8b"}},
+		name: "single full id",
+		filter: NewFilter(
+			WithIDs([]string{
+				"e67fa7b84df6b0bb4c57f8719149de77f58955d7849da1be10b2267c72daad8b"}),
+		),
 		expectedIDs: []string{"e67fa7b8"},
 	},
 
 	{
 		name:        "multiple id prefixes",
-		filter:      Filter{IDs: []string{"562bc378", "5e4c64f1"}},
+		filter:      NewFilter(WithIDs([]string{"562bc378", "5e4c64f1"})),
 		expectedIDs: []string{"562bc378", "5e4c64f1"},
 	},
 
 	{
 		name:        "no id match",
-		filter:      Filter{IDs: []string{"ffff"}},
+		filter:      NewFilter(WithIDs([]string{"ffff"})),
 		expectedIDs: []string{},
 	},
 
 	{
 		name:   "empty author",
-		filter: Filter{Authors: []string{}},
+		filter: NewFilter(WithAuthors([]string{})),
 		expectedIDs: []string{
 			"e751d41f",
 			"562bc378",
@@ -111,13 +114,13 @@ var filterTestCases = []FilterTestCase{
 
 	{
 		name:        "single author prefix",
-		filter:      Filter{Authors: []string{"d877e187"}},
+		filter:      NewFilter(WithAuthors([]string{"d877e187"})),
 		expectedIDs: []string{"e751d41f", "562bc378", "e67fa7b8"},
 	},
 
 	{
 		name:   "multiple author prefixex",
-		filter: Filter{Authors: []string{"d877e187", "9e4b726a"}},
+		filter: NewFilter(WithAuthors([]string{"d877e187", "9e4b726a"})),
 		expectedIDs: []string{
 			"e751d41f",
 			"562bc378",
@@ -129,20 +132,23 @@ var filterTestCases = []FilterTestCase{
 	},
 
 	{
-		name:        "single author full",
-		filter:      Filter{Authors: []string{"d877e187934bd942a71221b50ff2b426bd0777991b41b6c749119805dc40bcbe"}},
+		name: "single author full",
+		filter: NewFilter(
+			WithAuthors([]string{
+				"d877e187934bd942a71221b50ff2b426bd0777991b41b6c749119805dc40bcbe"}),
+		),
 		expectedIDs: []string{"e751d41f", "562bc378", "e67fa7b8"},
 	},
 
 	{
 		name:        "no author match",
-		filter:      Filter{Authors: []string{"ffff"}},
+		filter:      NewFilter(WithAuthors([]string{"ffff"})),
 		expectedIDs: []string{},
 	},
 
 	{
 		name:   "empty kind",
-		filter: Filter{Kinds: []int{}},
+		filter: NewFilter(WithKinds([]int{})),
 		expectedIDs: []string{
 			"e751d41f",
 			"562bc378",
@@ -158,13 +164,13 @@ var filterTestCases = []FilterTestCase{
 
 	{
 		name:        "single kind",
-		filter:      Filter{Kinds: []int{1}},
+		filter:      NewFilter(WithKinds([]int{1})),
 		expectedIDs: []string{"562bc378", "7a5d83d4", "4b03b69a"},
 	},
 
 	{
 		name:   "multiple kinds",
-		filter: Filter{Kinds: []int{0, 2}},
+		filter: NewFilter(WithKinds([]int{0, 2})),
 		expectedIDs: []string{
 			"e751d41f",
 			"e67fa7b8",
@@ -177,13 +183,13 @@ var filterTestCases = []FilterTestCase{
 
 	{
 		name:        "no kind match",
-		filter:      Filter{Kinds: []int{99}},
+		filter:      NewFilter(WithKinds([]int{99})),
 		expectedIDs: []string{},
 	},
 
 	{
 		name:   "since only",
-		filter: Filter{Since: intPtr(5000)},
+		filter: NewFilter(WithSince(5000)),
 		expectedIDs: []string{
 			"7a5d83d4",
 			"3a122100",
@@ -195,7 +201,7 @@ var filterTestCases = []FilterTestCase{
 
 	{
 		name:   "until only",
-		filter: Filter{Until: intPtr(3000)},
+		filter: NewFilter(WithUntil(3000)),
 		expectedIDs: []string{
 			"e751d41f",
 			"562bc378",
@@ -204,11 +210,8 @@ var filterTestCases = []FilterTestCase{
 	},
 
 	{
-		name: "time range",
-		filter: Filter{
-			Since: intPtr(4000),
-			Until: intPtr(6000),
-		},
+		name:   "time range",
+		filter: NewFilter(WithSince(4000), WithUntil(6000)),
 		expectedIDs: []string{
 			"5e4c64f1",
 			"7a5d83d4",
@@ -217,20 +220,14 @@ var filterTestCases = []FilterTestCase{
 	},
 
 	{
-		name: "outside time range",
-		filter: Filter{
-			Since: intPtr(10000),
-		},
+		name:        "outside time range",
+		filter:      NewFilter(WithSince(10000)),
 		expectedIDs: []string{},
 	},
 
 	{
-		name: "empty tag filter",
-		filter: Filter{
-			Tags: TagFilters{
-				"e": {},
-			},
-		},
+		name:   "empty tag filter",
+		filter: NewFilter(WithTag("e", []string{})),
 		expectedIDs: []string{
 			"e751d41f",
 			"562bc378",
@@ -246,97 +243,85 @@ var filterTestCases = []FilterTestCase{
 
 	{
 		name: "single letter tag filter: e",
-		filter: Filter{
-			Tags: TagFilters{
-				"e": {"5c83da77af1dec6d7289834998ad7aafbd9e2191396d75ec3cc27f5a77226f36"},
-			},
-		},
+		filter: NewFilter(
+			WithTag("e", []string{
+				"5c83da77af1dec6d7289834998ad7aafbd9e2191396d75ec3cc27f5a77226f36"}),
+		),
 		expectedIDs: []string{"562bc378"},
 	},
 
 	{
 		name: "multiple tag matches",
-		filter: Filter{
-			Tags: TagFilters{
-				"e": {
-					"5c83da77af1dec6d7289834998ad7aafbd9e2191396d75ec3cc27f5a77226f36",
-					"ae3f2a91b6c3d8f7e9a1c5b4d8f2e7a9b6c3d8f7e9a1c5b4d8f2e7a9b6c3d8f7",
-				},
-			},
-		},
+		filter: NewFilter(
+			WithTag("e", []string{
+				"5c83da77af1dec6d7289834998ad7aafbd9e2191396d75ec3cc27f5a77226f36",
+				"ae3f2a91b6c3d8f7e9a1c5b4d8f2e7a9b6c3d8f7e9a1c5b4d8f2e7a9b6c3d8f7",
+			}),
+		),
 		expectedIDs: []string{"562bc378", "3a122100"},
 	},
 
 	{
 		name: "multiple tag matches - single event match",
-		filter: Filter{
-			Tags: TagFilters{
-				"e": {
-					"5c83da77af1dec6d7289834998ad7aafbd9e2191396d75ec3cc27f5a77226f36",
-					"cb7787c460a79187d6a13e75a0f19240e05fafca8ea42288f5765773ea69cf2f",
-				},
-			},
-		},
+		filter: NewFilter(
+			WithTag("e", []string{
+				"5c83da77af1dec6d7289834998ad7aafbd9e2191396d75ec3cc27f5a77226f36",
+				"cb7787c460a79187d6a13e75a0f19240e05fafca8ea42288f5765773ea69cf2f",
+			}),
+		),
 		expectedIDs: []string{"562bc378"},
 	},
 
 	{
 		name: "single letter tag filter: p",
-		filter: Filter{
-			Tags: TagFilters{
-				"p": {"91cf9b32f3735070f46c0a86a820a47efa08a5be6c9f4f8cf68e5b5b75c92d60"},
-			},
-		},
+		filter: NewFilter(
+			WithTag("p", []string{
+				"91cf9b32f3735070f46c0a86a820a47efa08a5be6c9f4f8cf68e5b5b75c92d60"}),
+		),
 		expectedIDs: []string{"e67fa7b8"},
 	},
 
 	{
 		name: "multi letter tag filter",
-		filter: Filter{
-			Tags: TagFilters{
-				"emoji": {"🌊"},
-			},
-		},
+		filter: NewFilter(
+			WithTag("emoji", []string{"🌊"}),
+		),
 		expectedIDs: []string{"e67fa7b8"},
 	},
 
 	{
 		name: "multiple tag filters",
-		filter: Filter{
-			Tags: TagFilters{
-				"e": {"ae3f2a91b6c3d8f7e9a1c5b4d8f2e7a9b6c3d8f7e9a1c5b4d8f2e7a9b6c3d8f7"},
-				"p": {"3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d"},
-			},
-		},
+		filter: NewFilter(
+			WithTag("e", []string{
+				"ae3f2a91b6c3d8f7e9a1c5b4d8f2e7a9b6c3d8f7e9a1c5b4d8f2e7a9b6c3d8f7"}),
+			WithTag("p", []string{
+				"3bf0c63fcb93463407af97a5e5ee64fa883d107ef9e558472c4eb9aaaefa459d"}),
+		),
 		expectedIDs: []string{"3a122100"},
 	},
 
 	{
 		name: "prefix tag filter",
-		filter: Filter{
-			Tags: TagFilters{
-				"p": {"ae3f2a91"},
-			},
-		},
+		filter: NewFilter(
+			WithTag("p", []string{"ae3f2a91"}),
+		),
 		expectedIDs: []string{},
 	},
 
 	{
 		name: "unknown tag filter",
-		filter: Filter{
-			Tags: TagFilters{
-				"z": {"anything"},
-			},
-		},
+		filter: NewFilter(
+			WithTag("z", []string{"anything"}),
+		),
 		expectedIDs: []string{},
 	},
 
 	{
 		name: "combined author+kind tag filter",
-		filter: Filter{
-			Authors: []string{"d877e187"},
-			Kinds:   []int{1, 2},
-		},
+		filter: NewFilter(
+			WithAuthors([]string{"d877e187"}),
+			WithKinds([]int{1, 2}),
+		),
 		expectedIDs: []string{
 			"562bc378",
 			"e67fa7b8",
@@ -345,11 +330,11 @@ var filterTestCases = []FilterTestCase{
 
 	{
 		name: "combined kind+time range tag filter",
-		filter: Filter{
-			Kinds: []int{0},
-			Since: intPtr(2000),
-			Until: intPtr(7000),
-		},
+		filter: NewFilter(
+			WithKinds([]int{0}),
+			WithSince(2000),
+			WithUntil(7000),
+		),
 		expectedIDs: []string{
 			"5e4c64f1",
 			"4a15d963",
@@ -358,12 +343,10 @@ var filterTestCases = []FilterTestCase{
 
 	{
 		name: "combined author+tag tag filter",
-		filter: Filter{
-			Authors: []string{"e719e8f8"},
-			Tags: TagFilters{
-				"power": {"fire"},
-			},
-		},
+		filter: NewFilter(
+			WithAuthors([]string{"e719e8f8"}),
+			WithTag("power", []string{"fire"}),
+		),
 		expectedIDs: []string{
 			"4a15d963",
 		},
@@ -371,15 +354,13 @@ var filterTestCases = []FilterTestCase{
 
 	{
 		name: "combined tag filter",
-		filter: Filter{
-			Authors: []string{"e719e8f8"},
-			Kinds:   []int{0},
-			Since:   intPtr(5000),
-			Until:   intPtr(10000),
-			Tags: TagFilters{
-				"power": {"fire"},
-			},
-		},
+		filter: NewFilter(
+			WithAuthors([]string{"e719e8f8"}),
+			WithKinds([]int{0}),
+			WithSince(5000),
+			WithUntil(10000),
+			WithTag("power", []string{"fire"}),
+		),
 		expectedIDs: []string{
 			"4a15d963",
 		},
@@ -404,17 +385,13 @@ func TestEventFilterMatching(t *testing.T) {
 // TestEventFilterMatchingSkipMalformedTags documents that filter.Matches()
 // skips malformed tags during tag matching
 func TestEventFilterMatchingSkipMalformedTags(t *testing.T) {
-	event := events.Event{
-		Tags: []events.Tag{
-			{"malformed"},
-			{"valid", "value"},
-		},
-	}
-	filter := Filter{
-		Tags: TagFilters{
-			"valid": {"value"},
-		},
-	}
+	event := events.NewEvent(
+		events.WithTag(events.Tag{"malformed"}),
+		events.WithTag(events.Tag{"valid", "value"}),
+	)
+	filter := NewFilter(
+		WithTag("valid", []string{"value"}),
+	)
 
 	assert.True(t, Matches(filter, event))
 }
