@@ -14,6 +14,7 @@ type Tag []string
 
 // Event represents a Nostr protocol event, with its seven required fields.
 // All fields must be present for a valid event.
+//easyjson:json
 type Event struct {
 	ID        string `json:"id"`
 	PubKey    string `json:"pubkey"`
