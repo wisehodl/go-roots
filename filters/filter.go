@@ -111,7 +111,7 @@ func WithExtension(l string, e json.RawMessage) FilterOption {
 
 // MarshalJSON converts the filter to JSON with standard fields, tag filters
 // (prefixed with "#"), and extensions merged into a single object.
-func MarshalJSON(f Filter) ([]byte, error) {
+func (f Filter) MarshalJSON() ([]byte, error) {
 	outputMap := make(map[string]interface{})
 
 	// Add standard fields
@@ -168,7 +168,7 @@ func MarshalJSON(f Filter) ([]byte, error) {
 
 // UnmarshalJSON parses JSON into the filter, separating standard fields,
 // tag filters (keys starting with "#"), and extensions.
-func UnmarshalJSON(data []byte, f *Filter) error {
+func (f *Filter) UnmarshalJSON(data []byte) error {
 	// Decode into raw map
 	raw := make(FilterExtensions)
 	if err := json.Unmarshal(data, &raw); err != nil {

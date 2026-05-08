@@ -547,7 +547,7 @@ var roundTripTestCases = []FilterRoundTripTestCase{
 func TestFilterMarshalJSON(t *testing.T) {
 	for _, tc := range marshalTestCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := MarshalJSON(tc.filter)
+			result, err := json.Marshal(tc.filter)
 			assert.NoError(t, err)
 
 			var expectedMap, actualMap map[string]interface{}
@@ -565,7 +565,7 @@ func TestFilterUnmarshalJSON(t *testing.T) {
 	for _, tc := range unmarshalTestCases {
 		t.Run(tc.name, func(t *testing.T) {
 			var result Filter
-			err := UnmarshalJSON([]byte(tc.input), &result)
+			err := json.Unmarshal([]byte(tc.input), &result)
 			assert.NoError(t, err)
 
 			expectEqualFilters(t, result, tc.expected)
@@ -576,11 +576,11 @@ func TestFilterUnmarshalJSON(t *testing.T) {
 func TestFilterRoundTrip(t *testing.T) {
 	for _, tc := range roundTripTestCases {
 		t.Run(tc.name, func(t *testing.T) {
-			jsonBytes, err := MarshalJSON(tc.filter)
+			jsonBytes, err := json.Marshal(tc.filter)
 			assert.NoError(t, err)
 
 			var result Filter
-			err = UnmarshalJSON(jsonBytes, &result)
+			err = json.Unmarshal(jsonBytes, &result)
 			assert.NoError(t, err)
 
 			expectEqualFilters(t, result, tc.filter)
