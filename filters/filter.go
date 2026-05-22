@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"git.wisehodl.dev/jay/go-roots/events"
 	"strings"
-	"time"
 )
 
 // TagFilters maps tag names to arrays of values for tag-based filtering
@@ -67,20 +66,6 @@ func WithUntil(until int64) FilterOption {
 	return func(f *Filter) {
 		ptr := until
 		f.Until = &ptr
-	}
-}
-
-func WithUntilTime(until time.Time) FilterOption {
-	return func(f *Filter) {
-		untilInt := until.Unix()
-		f.Until = &untilInt
-	}
-}
-
-func WithSinceTime(since time.Time) FilterOption {
-	return func(f *Filter) {
-		sinceInt := since.Unix()
-		f.Since = &sinceInt
 	}
 }
 

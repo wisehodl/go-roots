@@ -3,9 +3,7 @@
 // serialization, cryptographic signatures, and subscription filters.
 package events
 
-import (
-	"time"
-)
+
 
 // Tag represents a single tag within an event as an array of strings.
 // The first element identifies the tag name, the second contains the value,
@@ -26,7 +24,7 @@ type Event struct {
 }
 
 func NewEvent(opts ...EventOption) Event {
-	e := Event{Tags: make([]Tag, 0)}
+	e := Event{}
 	for _, opt := range opts {
 		opt(&e)
 	}
@@ -50,12 +48,6 @@ func WithPubKey(pk string) EventOption {
 func WithCreatedAt(t int64) EventOption {
 	return func(e *Event) {
 		e.CreatedAt = t
-	}
-}
-
-func WithCreatedAtTime(t time.Time) EventOption {
-	return func(e *Event) {
-		e.CreatedAt = t.Unix()
 	}
 }
 
