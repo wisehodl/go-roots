@@ -1,4 +1,4 @@
-# Go-Roots - Nostr Protocol Library for Golang
+# go-roots — Nostr Protocol Library for Go
 
 Source: https://git.wisehodl.dev/jay/go-roots
 
@@ -6,22 +6,18 @@ Mirror: https://github.com/wisehodl/go-roots
 
 ## What this library does
 
-`go-roots` is a consensus-layer Nostr protocol library for golang.
-It only provides primitives that define protocol compliance:
+`go-roots` is a consensus-layer Nostr protocol library for Go.
+It provides primitives that define protocol compliance:
 
-- Event Structure
-- Serialization
-- Cryptographic Signatures
-- Subscription Filters
+- Event structure and serialization
+- Cryptographic signing and validation
+- Subscription filters
 
 ## What this library does not do
 
-`go-roots` serves a foundation for other libraries and applications to
-implement higher level abstractions of the Nostr protocol on top of it,
-including message transport, semantic event definitions, event storage
-mechanisms, and user interfaces.
+`go-roots` serves as a foundation for libraries and applications that implement higher-level abstractions of the Nostr protocol, including message transport, semantic event definitions, event storage, and user interfaces.
 
-`go-roots` prioritizes correctness and clarity over optimization and efficiency. For high performance applications, it is recommended to implement optimizations in a separate library or in the application which requires them.
+`go-roots` prioritizes correctness and clarity over optimization and efficiency. High-performance applications should implement optimizations in a separate library or in the application itself.
 
 ## Installation
 
@@ -31,7 +27,7 @@ mechanisms, and user interfaces.
 go get git.wisehodl.dev/jay/go-roots
 ```
 
-If the primary repository is unavailable, use the `replace` directive in your go.mod file to get the package from the github mirror:
+If the primary repository is unavailable, use the `replace` directive in your go.mod file to get the package from the GitHub mirror:
 
 ```
 replace git.wisehodl.dev/jay/go-roots => github.com/wisehodl/go-roots latest
@@ -39,7 +35,7 @@ replace git.wisehodl.dev/jay/go-roots => github.com/wisehodl/go-roots latest
 
 2. Import the packages:
 
-```golang
+```go
 import (
     "git.wisehodl.dev/jay/go-roots/errors"
     "git.wisehodl.dev/jay/go-roots/events"
@@ -48,9 +44,9 @@ import (
 )
 ```
 
-3. Access functions with appropriate namespaces.
+## General Use
 
-## Usage Examples
+`ValidatedEvent` is the primary type consumers work with. A plain `Event` is a mutable scratch pad used during construction or deserialization. Once an event passes cryptographic validation, it is promoted to `ValidatedEvent` through a single gate: `NewValidatedEvent`. After that point, the event is immutable and its fields are accessed through methods.
 
 ### Key Management
 
@@ -68,7 +64,7 @@ if err != nil {
 }
 ```
 
-#### Derive public key from existing private key
+#### Derive public key from an existing private key
 
 ```go
 privateKey := "f43a0435f69529f310bbd1d6263d2fbf0977f54bfe2310cc37ae5904b83bb167"
@@ -76,132 +72,99 @@ publicKey, err := keys.GetPublicKey(privateKey)
 // publicKey: "cfa87f35acbde29ba1ab3ee42de527b2cad33ac487e80cf2d6405ea0042c8fef"
 ```
 
----
+### Flow 1: Creating an event
 
-### Event Creation and Signing
-
-#### Create and sign a complete event
+Build the event with `NewEvent`, compute the ID with `GetID`, sign it with `SignEvent`, then promote to `ValidatedEvent` with `NewValidatedEvent`.
 
 ```go
-// 1. Build the event structure
-event := events.Event{
-    PubKey:    publicKey,
-    CreatedAt: int(time.Now().Unix()),
-    Kind:      1,
-    Tags: []events.Tag{
-        {"e", "5c83da77af1dec6d7289834998ad7aafbd9e2191396d75ec3cc27f5a77226f36"},
-        {"p", "91cf9b32f3735070f46c0a86a820a47efa08a5be6c9f4f8cf68e5b5b75c92d60"},
-    },
-    Content: "Hello, Nostr!",
-}
+// 1. Build the event
+event := events.NewEvent(
+    events.WithPubKey(publicKey),
+    events.WithCreatedAt(time.Now().Unix()),
+    events.WithKind(1),
+    events.WithTag(events.Tag{"e", "5c83da77af1dec6d7289834998ad7aafbd9e2191396d75ec3cc27f5a77226f36"}),
+    events.WithTag(events.Tag{"p", "91cf9b32f3735070f46c0a86a820a47efa08a5be6c9f4f8cf68e5b5b75c92d60"}),
+    events.WithContent("Hello, Nostr!"),
+)
 
-// 2. Compute the event ID
-id := events.GetID(event)
-event.ID = id
+// 2. Compute and assign the ID
+event.ID = events.GetID(event)
 
 // 3. Sign the event
-sig, err := events.SignEvent(id, privateKey)
+sig, err := events.SignEvent(event.ID, privateKey)
 if err != nil {
     log.Fatal(err)
 }
 event.Sig = sig
-```
 
-#### Serialize an event for ID computation
-
-```go
-// Returns canonical JSON: [0, pubkey, created_at, kind, tags, content]
-serialized := events.Serialize(event)
-```
-
-#### Compute event ID manually
-
-```go
-id := events.GetID(event)
-// Returns lowercase hex SHA-256 hash of serialized form
-```
-
----
-
-### Event Validation
-
-#### Validate complete event
-
-```go
-// Checks structure, ID computation, and signature
-if err := events.Validate(event); err != nil {
-    log.Printf("Invalid event: %v", err)
-}
-```
-
-#### Validate individual aspects
-
-```go
-// Check field formats and lengths
-if err := events.ValidateStructure(event); err != nil {
-    log.Printf("Malformed structure: %v", err)
-}
-
-// Verify ID matches computed hash
-if err := events.ValidateID(event); err != nil {
-    log.Printf("ID mismatch: %v", err)
-}
-
-// Verify cryptographic signature
-if err := events.ValidateSignature(event); err != nil {
-    log.Printf("Invalid signature: %v", err)
-}
-```
-
----
-
-### Event JSON
-
-#### Marshal event to JSON
-
-```go
-jsonBytes, err := json.Marshal(event)
+// 4. Promote to ValidatedEvent
+validated, err := events.NewValidatedEvent(event)
 if err != nil {
-    log.Fatal(err)
+    log.Fatal(err) // construction bug — treat as a defect, not a runtime condition
 }
-// Standard encoding/json works with Event struct tags
 ```
 
-#### Unmarshal event from JSON
+For applications that delegate signing to a remote signer (NIP-46, hardware device, custody service): build the unsigned `Event`, send it to the signer, receive the signed `Event` back, then call `NewValidatedEvent` on what you received.
+
+### Flow 2: Receiving an event from an external source
+
+Unmarshal into a plain `Event`, then immediately promote to `ValidatedEvent` with `NewValidatedEvent`.
 
 ```go
 var event events.Event
-err := json.Unmarshal(jsonBytes, &event)
-if err != nil {
-    log.Fatal(err)
+if err := json.Unmarshal(data, &event); err != nil {
+    log.Printf("Malformed JSON: %v", err)
+    return
 }
 
-// Validate after unmarshaling
-if err := events.Validate(event); err != nil {
-    log.Printf("Received invalid event: %v", err)
+validated, err := events.NewValidatedEvent(event)
+if err != nil {
+    log.Printf("Invalid event: %v", err) // reject from peer; investigate if from database
+    return
 }
 ```
 
----
+### Flow 3: Serializing a validated event to JSON
 
-### Filter Creation
+Call `json.Marshal` on a `ValidatedEvent`. The output is guaranteed to reflect a cryptographically verified event.
 
-#### Basic filter with standard fields
+```go
+jsonBytes, err := json.Marshal(validated)
+if err != nil {
+    log.Fatal(err)
+}
+```
+
+Calling `json.Marshal` on a plain `Event` is discouraged: the resulting JSON carries no integrity guarantee.
+
+### The `NewValidatedEvent` gate
+
+`NewValidatedEvent` is the single promotion point. It verifies:
+
+- Valid field structure (hex lengths, tag shape, field formats)
+- ID matches the SHA-256 hash of the canonical serialization
+- Signature is a valid Schnorr signature over the ID for the given public key
+
+It does not verify semantic validity. A `ValidatedEvent` is valid according to the base Nostr protocol. Whether it is valid for your application — correct kind, trusted author, within a relevant time window — is your responsibility.
+
+### Filters
+
+#### Build a filter
 
 ```go
 since := int(time.Now().Add(-24 * time.Hour).Unix())
 limit := 50
 
 filter := filters.Filter{
-    IDs:     []string{"abc123", "def456"},  // Prefix match
-    Authors: []string{"cfa87f35"},          // Prefix match
+    IDs:     []string{"abc123", "def456"},  // prefix match
+    Authors: []string{"cfa87f35"},          // prefix match
     Kinds:   []int{1, 6, 7},
     Since:   &since,
     Limit:   &limit,
 }
 ```
 
-#### Filter with tag conditions
+#### Tag filters
 
 ```go
 filter := filters.Filter{
@@ -213,27 +176,9 @@ filter := filters.Filter{
 }
 ```
 
-#### Filter with extensions (custom fields)
+#### Match events against a filter
 
-```go
-// Extensions allow arbitrary JSON fields beyond the standard filter spec.
-// For example, this is how to implement non-standard filters like 'search'.
-filter := filters.Filter{
-    Kinds: []int{1},
-    Extensions: filters.FilterExtensions{
-        "search": json.RawMessage(`"bitcoin"`),
-    },
-}
-
-// Extensions are preserved during marshal/unmarshal but ignored by Matches().
-// Storage/transport layers can inspect Extensions to implement custom behavior.
-```
-
----
-
-### Filter Matching
-
-#### Match single event
+`Matches` accepts a `ValidatedEvent`. Unvalidated events cannot be passed to it.
 
 ```go
 filter := filters.Filter{
@@ -241,88 +186,33 @@ filter := filters.Filter{
     Kinds:   []int{1},
 }
 
-if filters.Matches(filter, event) {
-    // Event satisfies all filter conditions
-}
-```
-
-#### Filter event collection
-
-```go
-since := int(time.Now().Add(-1 * time.Hour).Unix())
-filter := filters.Filter{
-    Kinds: []int{1},
-    Since: &since,
-    Tags: filters.TagFilters{
-        "p": {"abc123", "def456"},  // OR within tag values
-    },
-}
-
-var matches []events.Event
-for _, event := range events {
+var matched []events.ValidatedEvent
+for _, event := range incoming {
     if filters.Matches(filter, event) {
-        matches = append(matches, event)
+        matched = append(matched, event)
     }
 }
 ```
 
----
+`Matches` covers the standard NIP-01 filter fields. For non-trivial matching logic, implement your own.
 
-### Filter JSON
+#### Filter JSON
 
-#### Marshal filter to JSON
+Tag filter keys are prefixed with `#` in JSON (`#e`, `#p`). Unrecognized fields are captured in `Extensions` and are retained as-found. `Matches` ignores `Extensions`; higher layers can inspect them for custom behavior.
 
 ```go
-filter := filters.Filter{
-    IDs:   []string{"abc123"},
-    Kinds: []int{1},
-    Tags: filters.TagFilters{
-        "e": {"event-id"},
-    },
-    Extensions: filters.FilterExtensions{
-        "search": json.RawMessage(`"nostr"`),
-    },
-}
-
+// Marshal
 jsonBytes, err := filters.MarshalJSON(filter)
-// Result: {"ids":["abc123"],"kinds":[1],"#e":["event-id"],"search":"nostr"}
-```
+// {"authors":["cfa87f35"],"kinds":[1],"#e":["..."],"since":...}
 
-#### Unmarshal filter from JSON
-
-```go
-jsonData := `{
-    "authors": ["cfa87f35"],
-    "kinds": [1],
-    "#e": ["abc123"],
-    "since": 1234567890,
-    "search": "bitcoin"
-}`
-
-var filter filters.Filter
-err := filters.UnmarshalJSON([]byte(jsonData), &filter)
-if err != nil {
+// Unmarshal
+var f filters.Filter
+if err := filters.UnmarshalJSON(data, &f); err != nil {
     log.Fatal(err)
 }
-
-// Standard fields populated: Authors, Kinds, Since
-// Tag filters populated: Tags["e"] = ["abc123"]
-// Unknown fields populated: Extensions["search"] = "bitcoin"
 ```
 
-#### Extensions field behavior
-
-The `Extensions` field captures any JSON properties not recognized as standard filter fields or tag filters. This design allows the core library to remain frozen while storage and transport layers implement custom filtering behavior.
-
-**Standard fields**: `ids`, `authors`, `kinds`, `since`, `until`, `limit`
-
-**Tag filters**: Any key starting with `#` (e.g., `#e`, `#p`, `#emoji`)
-
-**Extensions**: Everything else
-
-During marshaling, Extensions merge into the output JSON. During unmarshaling, unrecognized fields populate Extensions. The `Matches()` method ignores Extensions, and the library expects higher protocol layers to implement their usage.
-
-Example implementing search filter:
+Extensions example:
 
 ```go
 filter := filters.Filter{
@@ -334,15 +224,26 @@ filter := filters.Filter{
 
 // In a storage layer (not this library):
 if searchRaw, ok := filter.Extensions["search"]; ok {
-    var searchTerm string
-    json.Unmarshal(searchRaw, &searchTerm)
-    // Apply full-text search using searchTerm
+    var term string
+    json.Unmarshal(searchRaw, &term)
+    // apply full-text search
 }
 ```
 
-## Testing
+---
 
-This library contains a comprehensive suite of unit tests. Run them with:
+## Specialized / Low-Level Tools
+
+These are building blocks for custom pipelines. General use does not require them.
+
+- **`Validate(e Event) error`** — full validation in one call; used internally by `NewValidatedEvent`
+- **`ValidateStructure(e Event) error`** — field format checks only
+- **`ValidateSignature(e Event) error`** — Schnorr signature verification only
+- **`Serialize(e Event) []byte`** — canonical `[0, pubkey, created_at, kind, tags, content]` JSON array; used for ID computation
+- **`GetID(e Event) string`** — SHA-256 of `Serialize`, returned as lowercase hex
+- **`IsValidKey(s string) bool`**, **`IsValidID`**, **`IsValidSig`** — format validators for individual field values; useful when handling these value types outside of event validation
+
+## Testing
 
 ```bash
 go test ./...
