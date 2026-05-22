@@ -8,15 +8,23 @@ import (
 	"testing"
 )
 
-var testEvents []events.Event
+var testEvents []events.ValidatedEvent
 
 func init() {
 	data, err := os.ReadFile("testdata/test_events.json")
 	if err != nil {
 		panic(err)
 	}
-	if err := json.Unmarshal(data, &testEvents); err != nil {
+	var raw []events.Event
+	if err := json.Unmarshal(data, &raw); err != nil {
 		panic(err)
+	}
+	for _, e := range raw {
+		ve, err := events.NewValidatedEvent(e)
+		if err != nil {
+			panic(err)
+		}
+		testEvents = append(testEvents, ve)
 	}
 }
 
@@ -42,7 +50,7 @@ var filterTestCases = []FilterTestCase{
 		filter: NewFilter(),
 		expectedIDs: []string{
 			"e751d41f",
-			"562bc378",
+			"2e06c187",
 			"e67fa7b8",
 			"5e4c64f1",
 			"7a5d83d4",
@@ -58,7 +66,7 @@ var filterTestCases = []FilterTestCase{
 		filter: NewFilter(WithIDs([]string{})),
 		expectedIDs: []string{
 			"e751d41f",
-			"562bc378",
+			"2e06c187",
 			"e67fa7b8",
 			"5e4c64f1",
 			"7a5d83d4",
@@ -86,8 +94,8 @@ var filterTestCases = []FilterTestCase{
 
 	{
 		name:        "multiple id prefixes",
-		filter:      NewFilter(WithIDs([]string{"562bc378", "5e4c64f1"})),
-		expectedIDs: []string{"562bc378", "5e4c64f1"},
+		filter:      NewFilter(WithIDs([]string{"2e06c187", "5e4c64f1"})),
+		expectedIDs: []string{"2e06c187", "5e4c64f1"},
 	},
 
 	{
@@ -101,7 +109,7 @@ var filterTestCases = []FilterTestCase{
 		filter: NewFilter(WithAuthors([]string{})),
 		expectedIDs: []string{
 			"e751d41f",
-			"562bc378",
+			"2e06c187",
 			"e67fa7b8",
 			"5e4c64f1",
 			"7a5d83d4",
@@ -115,7 +123,7 @@ var filterTestCases = []FilterTestCase{
 	{
 		name:        "single author prefix",
 		filter:      NewFilter(WithAuthors([]string{"d877e187"})),
-		expectedIDs: []string{"e751d41f", "562bc378", "e67fa7b8"},
+		expectedIDs: []string{"e751d41f", "2e06c187", "e67fa7b8"},
 	},
 
 	{
@@ -123,7 +131,7 @@ var filterTestCases = []FilterTestCase{
 		filter: NewFilter(WithAuthors([]string{"d877e187", "9e4b726a"})),
 		expectedIDs: []string{
 			"e751d41f",
-			"562bc378",
+			"2e06c187",
 			"e67fa7b8",
 			"5e4c64f1",
 			"7a5d83d4",
@@ -137,7 +145,7 @@ var filterTestCases = []FilterTestCase{
 			WithAuthors([]string{
 				"d877e187934bd942a71221b50ff2b426bd0777991b41b6c749119805dc40bcbe"}),
 		),
-		expectedIDs: []string{"e751d41f", "562bc378", "e67fa7b8"},
+		expectedIDs: []string{"e751d41f", "2e06c187", "e67fa7b8"},
 	},
 
 	{
@@ -151,7 +159,7 @@ var filterTestCases = []FilterTestCase{
 		filter: NewFilter(WithKinds([]int{})),
 		expectedIDs: []string{
 			"e751d41f",
-			"562bc378",
+			"2e06c187",
 			"e67fa7b8",
 			"5e4c64f1",
 			"7a5d83d4",
@@ -165,7 +173,7 @@ var filterTestCases = []FilterTestCase{
 	{
 		name:        "single kind",
 		filter:      NewFilter(WithKinds([]int{1})),
-		expectedIDs: []string{"562bc378", "7a5d83d4", "4b03b69a"},
+		expectedIDs: []string{"2e06c187", "7a5d83d4", "4b03b69a"},
 	},
 
 	{
@@ -204,7 +212,7 @@ var filterTestCases = []FilterTestCase{
 		filter: NewFilter(WithUntil(3000)),
 		expectedIDs: []string{
 			"e751d41f",
-			"562bc378",
+			"2e06c187",
 			"e67fa7b8",
 		},
 	},
@@ -230,7 +238,7 @@ var filterTestCases = []FilterTestCase{
 		filter: NewFilter(WithTag("e", []string{})),
 		expectedIDs: []string{
 			"e751d41f",
-			"562bc378",
+			"2e06c187",
 			"e67fa7b8",
 			"5e4c64f1",
 			"7a5d83d4",
@@ -247,7 +255,7 @@ var filterTestCases = []FilterTestCase{
 			WithTag("e", []string{
 				"5c83da77af1dec6d7289834998ad7aafbd9e2191396d75ec3cc27f5a77226f36"}),
 		),
-		expectedIDs: []string{"562bc378"},
+		expectedIDs: []string{"2e06c187"},
 	},
 
 	{
@@ -258,7 +266,7 @@ var filterTestCases = []FilterTestCase{
 				"ae3f2a91b6c3d8f7e9a1c5b4d8f2e7a9b6c3d8f7e9a1c5b4d8f2e7a9b6c3d8f7",
 			}),
 		),
-		expectedIDs: []string{"562bc378", "3a122100"},
+		expectedIDs: []string{"2e06c187", "3a122100"},
 	},
 
 	{
@@ -269,7 +277,7 @@ var filterTestCases = []FilterTestCase{
 				"cb7787c460a79187d6a13e75a0f19240e05fafca8ea42288f5765773ea69cf2f",
 			}),
 		),
-		expectedIDs: []string{"562bc378"},
+		expectedIDs: []string{"2e06c187"},
 	},
 
 	{
@@ -323,7 +331,7 @@ var filterTestCases = []FilterTestCase{
 			WithKinds([]int{1, 2}),
 		),
 		expectedIDs: []string{
-			"562bc378",
+			"2e06c187",
 			"e67fa7b8",
 		},
 	},
@@ -373,25 +381,11 @@ func TestEventFilterMatching(t *testing.T) {
 			actualIDs := []string{}
 			for _, event := range testEvents {
 				if Matches(tc.filter, event) {
-					actualIDs = append(actualIDs, event.ID[:8])
+					actualIDs = append(actualIDs, event.ID()[:8])
 				}
 			}
 
 			assert.Equal(t, tc.expectedIDs, actualIDs)
 		})
 	}
-}
-
-// TestEventFilterMatchingSkipMalformedTags documents that filter.Matches()
-// skips malformed tags during tag matching
-func TestEventFilterMatchingSkipMalformedTags(t *testing.T) {
-	event := events.NewEvent(
-		events.WithTag(events.Tag{"malformed"}),
-		events.WithTag(events.Tag{"valid", "value"}),
-	)
-	filter := NewFilter(
-		WithTag("valid", []string{"value"}),
-	)
-
-	assert.True(t, Matches(filter, event))
 }

@@ -249,36 +249,37 @@ func (f *Filter) UnmarshalJSON(data []byte) error {
 // Matches returns true if the event satisfies all filter conditions.
 // Supports prefix matching for IDs and authors, and tag filtering.
 // Does not account for custom extensions.
-func Matches(f Filter, event events.Event) bool {
+func Matches(f Filter, event events.ValidatedEvent) bool {
 	// Check ID
 	if len(f.IDs) > 0 {
-		if !matchesPrefix(event.ID, f.IDs) {
+		if !matchesPrefix(event.ID(), f.IDs) {
 			return false
 		}
 	}
 
 	// Check Author
 	if len(f.Authors) > 0 {
-		if !matchesPrefix(event.PubKey, f.Authors) {
+		if !matchesPrefix(event.PubKey(), f.Authors) {
 			return false
 		}
 	}
 
 	// Check Kind
 	if len(f.Kinds) > 0 {
-		if !matchesKinds(event.Kind, f.Kinds) {
+		if !matchesKinds(event.Kind(), f.Kinds) {
 			return false
 		}
 	}
 
 	// Check Timestamp
-	if !matchesTimeRange(event.CreatedAt, f.Since, f.Until) {
+	if !matchesTimeRange(event.CreatedAt(), f.Since, f.Until) {
 		return false
 	}
 
 	// Check Tags
 	if len(f.Tags) > 0 {
-		if !matchesTags(event.Tags, &f.Tags) {
+		tags := event.Tags()
+		if !matchesTags(tags, &f.Tags) {
 			return false
 		}
 	}
