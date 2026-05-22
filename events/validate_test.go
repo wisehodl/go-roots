@@ -182,20 +182,6 @@ func TestValidateEventStructure(t *testing.T) {
 	}
 }
 
-func TestValidateEventIDFailure(t *testing.T) {
-	event := NewEvent(
-		WithID("7f661c2a3c1ed67dc959d6cd968d743d5e6e334313df44724bca939e2aa42c9e"),
-		WithPubKey(testEvent.PubKey),
-		WithCreatedAt(testEvent.CreatedAt),
-		WithKind(testEvent.Kind),
-		WithContent(testEvent.Content),
-		WithSig(testEvent.Sig),
-	)
-
-	err := ValidateID(event)
-	assert.ErrorContains(t, err, "does not match computed id")
-}
-
 func TestValidateSignature(t *testing.T) {
 	event := NewEvent(
 		WithID(testEvent.ID),

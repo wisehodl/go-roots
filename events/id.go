@@ -9,13 +9,8 @@ import (
 // GetID computes and returns the event ID as a lowercase, hex-encoded SHA-256 hash
 // of the serialized event.
 func GetID(e Event) string {
-	hash := GetIDBytes(e)
+	hash := sha256.Sum256(Serialize(e))
 	return hex.EncodeToString(hash[:])
-}
-
-// GetIDBytes computes and returns the event ID as a raw SHA256 digest
-func GetIDBytes(e Event) [32]byte {
-	return sha256.Sum256(Serialize(e))
 }
 
 // Serialize returns the canonical JSON array representation of the event.

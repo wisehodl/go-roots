@@ -2,6 +2,7 @@ package events
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"git.wisehodl.dev/jay/go-roots/errors"
@@ -15,9 +16,15 @@ func Validate(e Event) error {
 		return err
 	}
 
-	idBytes, err := checkIDMatch(e)
+	idHash := sha256.Sum256(Serialize(e))
+	idBytes, err := hex.DecodeString(e.ID)
 	if err != nil {
-		return err
+		return errors.MalformedID
+	}
+	if !bytes.Equal(idBytes, idHash[:]) {
+		return fmt.Errorf(
+			"event id %q does not match computed id %q",
+			e.ID, hex.EncodeToString(idHash[:]))
 	}
 
 	return validateSignatureBytes(idBytes, e.Sig, e.PubKey)
@@ -47,12 +54,6 @@ func ValidateStructure(e Event) error {
 	return nil
 }
 
-// ValidateID recomputes the event ID and verifies it matches the stored ID field.
-func ValidateID(e Event) error {
-	_, err := checkIDMatch(e)
-	return err
-}
-
 // ValidateSignature verifies the event signature is cryptographically valid
 // for the event ID and public key using Schnorr verification.
 func ValidateSignature(e Event) error {
@@ -70,31 +71,17 @@ func IsValidKey(value string) bool {
 	return isLowerHex(value, 64)
 }
 
-// IsValidKey verifies that an event id is properly formatted.
+// IsValidID verifies that an event id is properly formatted.
 func IsValidID(value string) bool {
 	return isLowerHex(value, 64)
 }
 
-// IsValidKey verifies that an event signature is properly formatted.
+// IsValidSig verifies that an event signature is properly formatted.
 func IsValidSig(value string) bool {
 	return isLowerHex(value, 128)
 }
 
 // Helpers
-
-func checkIDMatch(e Event) ([]byte, error) {
-	idHash := GetIDBytes(e)
-	idBytes, err := hex.DecodeString(e.ID)
-	if err != nil {
-		return nil, errors.MalformedID
-	}
-	if !bytes.Equal(idBytes, idHash[:]) {
-		return nil, fmt.Errorf(
-			"event id %q does not match computed id %q",
-			e.ID, hex.EncodeToString(idHash[:]))
-	}
-	return idBytes, nil
-}
 
 func validateSignatureBytes(idBytes []byte, sigHex, pkHex string) error {
 	sigBytes, err := hex.DecodeString(sigHex)
