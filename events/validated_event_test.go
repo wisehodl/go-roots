@@ -135,6 +135,22 @@ func TestValidatedEventTagsImmutability(t *testing.T) {
 		first[0][0] = "z"
 		assert.Equal(t, "a", second[0][0])
 	})
+
+	t.Run("nil tags remain nil", func(t *testing.T) {
+		nil_tags_event := Event{
+			ID:        testEvent.ID,
+			PubKey:    testEvent.PubKey,
+			CreatedAt: testEvent.CreatedAt,
+			Kind:      testEvent.Kind,
+			Tags:      nil,
+			Content:   testEvent.Content,
+			Sig:       testEvent.Sig,
+		}
+		ve, err := NewValidatedEvent(nil_tags_event)
+		assert.NoError(t, err)
+		assert.Nil(t, ve.Tags())
+		assert.Nil(t, ve.Event().Tags)
+	})
 }
 
 func TestValidatedEventEventImmutability(t *testing.T) {

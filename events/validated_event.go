@@ -41,6 +41,9 @@ func (v ValidatedEvent) Event() Event {
 }
 
 func deepCopyTags(tags []Tag) []Tag {
+	if tags == nil {
+		return nil
+	}
 	cp := make([]Tag, len(tags))
 	for i, tag := range tags {
 		tagcp := make(Tag, len(tag))
